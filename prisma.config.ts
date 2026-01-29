@@ -7,6 +7,6 @@ export default defineConfig({
     seed: 'tsx prisma/seed.ts',
   },
   datasource: {
-    url: env('DATABASE_URL'),
+    url: "postgresql://trade_vision_user:S25341300EX01053115@psql.dev.singlewindow.io:5432/dev_trade_vision?schema=public",
   },
 })
