@@ -1,25 +1,86 @@
-# Build Stage
-FROM node:22-alpine AS build
+# ============================================
+# TradeVision - TanStack Start + Prisma
+# Multi-stage Docker build
+# ============================================
+
+# Base image with Node.js
+FROM node:22-alpine AS base
+
+# Install dependencies needed for Prisma and native modules
+RUN apk add --no-cache libc6-compat openssl
+
+# Set working directory
+WORKDIR /app
+
+# ============================================
+# Dependencies stage
+# ============================================
+FROM base AS deps
+
+# Copy package files
+COPY package.json package-lock.json* ./
+
+# Install all dependencies (including devDependencies for build)
+RUN npm ci
+
+# ============================================
+# Build stage
+# ============================================
+FROM base AS builder
 
 WORKDIR /app
 
-# Copy package files and install dependencies
-COPY package.json package-lock.json ./
-RUN npm install
+# Copy dependencies from deps stage
+COPY --from=deps /app/node_modules ./node_modules
 
-# Copy source code and build the application
+# Copy source code
 COPY . .
+
+# Copy prisma schema and generate client
+# Provide dummy DATABASE_URL for prisma generate (doesn't connect, just generates types)
+COPY prisma ./prisma/
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy?schema=public"
+RUN npx prisma generate
+
+# Build the application
 RUN npm run build
 
-# Production Stage
-FROM nginx:stable-alpine
+# ============================================
+# Production stage
+# ============================================
+FROM base AS runner
 
-# Copy built assets from build stage
-COPY --from=build /app/dist /usr/share/nginx/html
+WORKDIR /app
 
-# Copy custom nginx config if needed (optional)
-# COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Set production environment
+ENV NODE_ENV=production
+ENV PORT=3000
 
-EXPOSE 80
+# Create non-root user for security
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 tanstack
 
-CMD ["nginx", "-g", "daemon off;"]
+# Copy built application
+COPY --from=builder /app/.output ./.output
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./package.json
+
+# Copy Prisma files for migrations (if needed at runtime)
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/src/generated ./src/generated
+
+# Set ownership
+RUN chown -R tanstack:nodejs /app
+
+# Switch to non-root user
+USER tanstack
+
+# Expose the application port
+EXPOSE 3000
+
+# Health check
+# HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+#   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
+
+# Start the application
+CMD ["node", ".output/server/index.mjs"]

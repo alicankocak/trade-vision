@@ -1,0 +1,65 @@
+services:
+  # TradeVision Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tradevision-app
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/tradevision?schema=public
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - tradevision-network
+
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: tradevision-db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=tradevision
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d tradevision']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - tradevision-network
+
+  # Prisma Studio (Development only)
+  prisma-studio:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tradevision-prisma-studio
+    command: npx prisma studio
+    ports:
+      - '5555:5555'
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/tradevision?schema=public
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles:
+      - dev
+    networks:
+      - tradevision-network
+
+volumes:
+  postgres_data:
+
+networks:
+  tradevision-network:
+    driver: bridge

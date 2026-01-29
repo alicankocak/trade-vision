@@ -1,10 +1,49 @@
+# Dependencies
 node_modules
+npm-debug.log*
+
+# Build output
+.output
 dist
+
+# Development files
 .git
 .gitignore
-.dockerignore
+.env*.local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test files
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+__tests__
+coverage
+
+# Documentation
 README.md
-npm-debug.log
-error.log
+CHANGELOG.md
+docs
+
+# Docker
+Dockerfile*
+docker-compose*
+.docker
+
+# Misc
+.prettierignore
 .eslintcache
-.vite
+*.log
