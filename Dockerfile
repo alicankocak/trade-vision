@@ -6,9 +6,6 @@
 # Base image with Node.js
 FROM node:22-slim AS base
 
-# Install dependencies needed for Prisma and native modules
-RUN apt-get update && apt-get install -y libc6-compat openssl
-
 # Set working directory
 WORKDIR /app
 
