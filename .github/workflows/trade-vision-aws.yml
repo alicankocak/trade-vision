@@ -1,0 +1,162 @@
+name: Trade Vision EKS Build And Deploy
+run-name: Deployment triggered for branch ${{ github.ref }} by @${{ github.actor }} with commit ${{ github.sha }} - ${{ github.event.head_commit.message }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Select the environment'
+        required: false
+        default: ''
+        type: choice
+        options:
+          - dev
+          - test
+          - production
+      action:
+        description: 'Select the action'
+        required: false
+        default: ''
+        type: choice
+        options:
+          - ''
+          - redeploy
+      image_tag:
+        description: 'Enter the image tag'
+        required: false
+        default: ''
+  push:
+    branches:
+      - dev
+      - test/v1
+      - release/v1
+
+jobs:
+  build-and-deploy:
+    runs-on: codebuild-trade-vision-runner-${{ github.run_id }}-${{ github.run_attempt }}
+    permissions:
+      id-token: write
+      issues: write
+      contents: read
+      packages: write
+      checks: write
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v2
+
+      - name: Creating Environment Variables
+        run: |
+          if [[ "${{ github.ref }}" == 'refs/heads/dev' ]] || [[ "${{ inputs.action }}" == 'redeploy' && "${{ inputs.environment }}" == 'dev' ]]; then
+            echo "SERVICE_NAME=trade-vision-dev" >> $GITHUB_ENV
+            echo "DOCKER_IMAGE_REPO=255114580789.dkr.ecr.eu-central-1.amazonaws.com/trade-vision-dev" >> $GITHUB_ENV
+            echo "env_x=dev" >> $GITHUB_ENV
+            echo "space_x=dev" >> $GITHUB_ENV
+            echo "namespace=dcs-online-dev" >> $GITHUB_ENV
+            echo "CLUSTER_NAME=atez-dev-cluster" >> $GITHUB_ENV
+          elif [[ "${{ github.ref }}" == 'refs/heads/test/v1' ]] || [[ "${{ inputs.action }}" == 'redeploy' && "${{ inputs.environment }}" == 'test' ]]; then
+            echo "SERVICE_NAME=trade-vision-test-v1" >> $GITHUB_ENV
+            echo "DOCKER_IMAGE_REPO=255114580789.dkr.ecr.eu-central-1.amazonaws.com/trade-vision-test" >> $GITHUB_ENV
+            echo "env_x=test-v1" >> $GITHUB_ENV
+            echo "space_x=test-v1" >> $GITHUB_ENV
+            echo "namespace=dcs-online-test" >> $GITHUB_ENV
+            echo "CLUSTER_NAME=atez-dev-cluster" >> $GITHUB_ENV
+          elif [[ "${{ github.ref }}" == 'refs/heads/release/v1' ]] || [[ "${{ inputs.action }}" == 'redeploy' && "${{ inputs.environment }}" == 'production' ]]; then
+            echo "SERVICE_NAME=trade-vision-v1" >> $GITHUB_ENV
+            echo "DOCKER_IMAGE_REPO=255114580789.dkr.ecr.eu-central-1.amazonaws.com/trade-vision-v1" >> $GITHUB_ENV
+            echo "env_x=v1" >> $GITHUB_ENV
+            echo "space_x=prod" >> $GITHUB_ENV
+            echo "namespace=dcs-online-prod" >> $GITHUB_ENV
+            echo "CLUSTER_NAME=atez-prod-cluster" >> $GITHUB_ENV
+          fi
+          echo "APP_NAME=trade-vision" >> $GITHUB_ENV
+          echo "GIT_COMMIT=${{ github.sha }}" >> $GITHUB_ENV
+          echo "AWS_REGION=eu-central-1" >> $GITHUB_ENV
+          echo "AWS_ECR=255114580789.dkr.ecr.eu-central-1.amazonaws.com" >> $GITHUB_ENV
+          echo "IMAGE_TAG=${{ inputs.image_tag }}" >> $GITHUB_ENV
+
+      - name: AWS ECR login
+        if: inputs.action != 'redeploy'
+        run: |
+          aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.AWS_ECR }}
+
+      - name: Docker Build and Tag
+        if: inputs.action != 'redeploy'
+        run: |
+          docker build . -t ${{ env.SERVICE_NAME }}:${{ env.GIT_COMMIT }} -f Dockerfile \
+            --network host --no-cache
+          docker tag ${{ env.SERVICE_NAME }}:${{ env.GIT_COMMIT }} ${{ env.DOCKER_IMAGE_REPO }}:${{ env.GIT_COMMIT }}
+          docker tag ${{ env.SERVICE_NAME }}:${{ env.GIT_COMMIT }} ${{ env.DOCKER_IMAGE_REPO }}:latest
+          echo "IMAGE_TAG=${{ env.GIT_COMMIT }}" >> $GITHUB_ENV
+
+      - name: Docker Push
+        if: inputs.action != 'redeploy'
+        run: |
+          docker push ${{ env.DOCKER_IMAGE_REPO }}:${{ env.GIT_COMMIT }}
+          docker push ${{ env.DOCKER_IMAGE_REPO }}:latest
+
+      - name: Checkout Helm Charts from DevOps Repository
+        uses: actions/checkout@v2
+        with:
+          repository: 'atezsoftware/devops'
+          token: ${{ secrets.DEVOPS_TOKEN }}
+          path: 'devops'
+
+      - name: Update kubeconfig for EKS
+        run: |
+          aws eks update-kubeconfig --name ${{ env.CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4.2.0
+
+      - name: Check Helm Release Status
+        run: |
+          set +e
+          helm status ${{ env.APP_NAME }}-${{ env.env_x }} --namespace ${{ env.namespace }} > helm_status.txt
+          if grep -q "another operation" helm_status.txt; then
+            echo "Another operation is in progress. Rolling back to previous release."
+            helm rollback ${{ env.APP_NAME }}-${{ env.env_x }} 0 --namespace ${{ env.namespace }}
+          fi
+          set -e
+
+      - name: Deploy to Kubernetes with Helm
+        id: helm_deploy
+        run: |
+          helm upgrade --install ${{ env.APP_NAME }}-${{ env.env_x }} \
+            -f ./devops/${{ env.space_x }}/trade-vision/trade-vision-values.yaml \
+            --namespace ${{ env.namespace }} \
+            --set image.tag=${{ env.IMAGE_TAG }} \
+            ./devops --wait --timeout 600s
+        continue-on-error: true
+
+      - name: Check Deployment Status
+        if: steps.helm_deploy.outcome == 'failure' || steps.helm_deploy.conclusion == 'failure'
+        run: |
+          echo "Deployment failed. Fetching logs and events..."
+          echo "=== START: Describe Deployment ==="
+          kubectl describe deployment ${{ env.env_x }}-${{ env.APP_NAME }}-deployment -n ${{ env.namespace }}
+          echo "=== END: Describe Deployment ==="
+          echo "=== START: Get Events ==="
+          kubectl get events --namespace ${{ env.namespace }} --sort-by='.metadata.creationTimestamp'
+          echo "=== END: Get Events ==="
+          echo "=== START: Check Non-Running Pods ==="
+          kubectl get pods --namespace ${{ env.namespace }} -l app=${{ env.env_x }}-${{ env.APP_NAME }} -o json | jq -r '.items[] | select(.status.containerStatuses[]?.state.waiting?.reason == "CrashLoopBackOff") | .metadata.name + " - " + .status.containerStatuses[]?.state.waiting?.reason'
+          echo "=== END: Check Non-Running Pods ==="
+          echo "=== START: Logs of Non-Running Pods ==="
+          for pod in $(kubectl get pods --namespace ${{ env.namespace }} -l app=${{ env.env_x }}-${{ env.APP_NAME }} -o json | jq -r '.items[] | select(.status.containerStatuses[]?.state.waiting?.reason == "CrashLoopBackOff") | .metadata.name'); do
+            echo "Logs for pod $pod:"
+            kubectl logs $pod --namespace ${{ env.namespace }}
+          done
+          echo "=== END: Logs of Non-Running Pods ==="
+
+      - name: Rollback on Failure
+        if: steps.helm_deploy.outcome == 'failure' || steps.helm_deploy.conclusion == 'failure'
+        run: |
+          echo "Rolling back deployment..."
+          helm rollback ${{ env.APP_NAME }}-${{ env.env_x }} 0 --namespace ${{ env.namespace }}
+          echo "Marking the job as failed"
+          exit 1
+
+      - name: Confirm Deployment Status
+        if: steps.helm_deploy.outcome == 'success'
+        run: echo "Deployment successful"

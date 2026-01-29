@@ -4,7 +4,6 @@ dist
 .gitignore
 .dockerignore
 README.md
-package-lock.json
 npm-debug.log
 error.log
 .eslintcache

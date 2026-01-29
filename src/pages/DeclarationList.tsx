@@ -8,9 +8,7 @@ import {
     EyeOutlined,
     WarningOutlined,
     InfoCircleOutlined,
-    DownloadOutlined,
-    PlusOutlined,
-    LoadingOutlined
+    PlusOutlined
 } from '@ant-design/icons';
 import { useTheme } from '../context/ThemeContext'; // Import context
 import type { ColumnsType } from 'antd/es/table';
@@ -25,7 +23,7 @@ const DeclarationList: React.FC = () => {
     const { isDarkMode } = useTheme();
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const [searchText, setSearchText] = useState('');
-    const [loading, setLoading] = useState(false);
+    const [_loading, _setLoading] = useState(false);
 
     // Drawer State
     const [drawerVisible, setDrawerVisible] = useState(false);
@@ -90,10 +88,6 @@ const DeclarationList: React.FC = () => {
     // Searching
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchText(e.target.value);
-    };
-
-    const handleVisibleChange = (newVisible: boolean) => {
-        setOpenFilter(newVisible);
     };
 
     // Open Drawer Handler
@@ -453,9 +447,9 @@ const DeclarationList: React.FC = () => {
                         pageSize: 10,
                         showTotal: (total) => `Toplam ${total} kayıt`,
                         className: 'px-4',
-                        itemRender: (page, type, originalElement) => {
+                        itemRender: (_page, type, originalElement) => {
                             if (type === 'prev' || type === 'next') {
-                                return React.cloneElement(originalElement as React.ReactElement, {
+                                return React.cloneElement(originalElement as React.ReactElement<{ style?: React.CSSProperties }>, {
                                     style: { color: isDarkMode ? 'white' : 'black' }
                                 });
                             }
@@ -464,10 +458,10 @@ const DeclarationList: React.FC = () => {
                     }}
                     expandable={{
                         expandedRowRender,
-                        rowExpandable: (record) => true,
+                        rowExpandable: () => true,
                     }}
                     scroll={{ x: 1000 }}
-                    onRow={(record) => ({
+                    onRow={() => ({
                         className: 'cursor-pointer group',
                     })}
                 />

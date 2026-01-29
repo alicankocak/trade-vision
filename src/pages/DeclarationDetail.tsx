@@ -9,7 +9,7 @@ import {
 import { useTheme } from '../context/ThemeContext';
 import { mockXmlData, declarationRisks, declarationFiles } from '../utils/mockData';
 
-const { Title } = Typography;
+const { Title: _Title } = Typography;
 
 const DeclarationDetail: React.FC = () => {
     const { isDarkMode } = useTheme();
@@ -40,10 +40,6 @@ const DeclarationDetail: React.FC = () => {
     const cardStyle = {
         background: isDarkMode ? '#141414' : '#ffffff',
         borderColor: isDarkMode ? '#303030' : '#e2e2e4',
-    };
-
-    const textStyle = {
-        color: isDarkMode ? '#e6e6e6' : 'rgba(0, 0, 0, 0.88)',
     };
 
     const items = [
