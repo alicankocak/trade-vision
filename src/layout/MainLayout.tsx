@@ -5,7 +5,7 @@ import {
   FileTextOutlined,
   TeamOutlined,
 } from '@ant-design/icons'
-import { useLocation, useNavigate } from '@tanstack/react-router'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import Header from '../components/layout/Header'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
@@ -40,12 +40,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     // Only show Users if Admin
     ...(isAdmin
       ? [
-          {
-            key: '/users',
-            icon: <TeamOutlined />,
-            label: 'Kullanıcı Listesi',
-          },
-        ]
+        {
+          key: '/users',
+          icon: <TeamOutlined />,
+          label: 'Kullanıcı Listesi',
+        },
+      ]
       : []),
   ]
 
@@ -98,7 +98,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           items={menuItems}
           className="h-full border-r-0"
           style={{ paddingTop: '1rem', background: 'transparent' }} // Let Sider bg control it
-          onClick={({ key }) => navigate({ to: key })}
+          onClick={({ key }) => navigate(key)}
         />
       </Sider>
 
@@ -119,7 +119,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             overflow: 'initial',
           }}
         >
-          {children}
+          <Outlet />
         </Content>
       </Layout>
     </Layout>

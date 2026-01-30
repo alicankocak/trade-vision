@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Button, Form, Input, Typography, message } from 'antd'
 import { LockOutlined, LoginOutlined, UserOutlined } from '@ant-design/icons'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 const { Title, Text } = Typography
@@ -21,7 +21,7 @@ const Login: React.FC = () => {
       ) {
         login('Admin')
         message.success('Giriş başarılı! Yönetici olarak yönlendiriliyorsunuz.')
-        navigate({ to: '/dashboard' })
+        navigate('/dashboard')
       } else if (
         values.email === 'user@tradevision.com' &&
         values.password === 'user123'
@@ -30,7 +30,7 @@ const Login: React.FC = () => {
         message.success(
           'Giriş başarılı! Kullanıcı olarak yönlendiriliyorsunuz.',
         )
-        navigate({ to: '/dashboard' })
+        navigate('/dashboard')
       } else {
         message.error('Hatalı e-posta veya şifre.')
       }

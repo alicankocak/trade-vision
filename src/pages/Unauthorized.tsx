@@ -1,6 +1,6 @@
 import React from 'react'
 import { Button, Result } from 'antd'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate } from 'react-router-dom'
 
 const Unauthorized: React.FC = () => {
   const navigate = useNavigate()
@@ -13,7 +13,7 @@ const Unauthorized: React.FC = () => {
       extra={
         <Button
           type="primary"
-          onClick={() => navigate({ to: '/' })}
+          onClick={() => navigate('/')}
           className="bg-black hover:bg-gray-800"
         >
           Anasayfaya Dön

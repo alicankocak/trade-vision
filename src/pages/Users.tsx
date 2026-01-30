@@ -17,7 +17,7 @@ import {
   StopOutlined,
   UserAddOutlined,
 } from '@ant-design/icons'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import type { ColumnsType } from 'antd/es/table'
 
