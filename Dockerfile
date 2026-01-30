@@ -58,7 +58,7 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 tanstack
 
 # Copy built application
-COPY --from=builder /app/.output ./.output
+COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 
@@ -80,4 +80,4 @@ EXPOSE 3000
 #   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
 
 # Start the application
-CMD ["node", ".output/server/index.mjs"]
+CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "3000"]
