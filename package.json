@@ -22,9 +22,11 @@
     "react-syntax-highlighter": "^16.1.0",
     "recharts": "^3.7.0",
     "sass": "^1.97.3",
-    "tailwindcss": "^4.1.18"
+    "tailwindcss": "^4.1.18",
+    "@prisma/client": "^6.3.0"
   },
   "devDependencies": {
+    "prisma": "^6.3.0",
     "@eslint/js": "^9.39.1",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/node": "^24.10.1",
