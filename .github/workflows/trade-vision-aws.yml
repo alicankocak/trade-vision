@@ -48,7 +48,9 @@ jobs:
       - name: Creating Environment Variables
         run: |
           if [[ "${{ github.ref }}" == 'refs/heads/dev' ]] || [[ "${{ inputs.action }}" == 'redeploy' && "${{ inputs.environment }}" == 'dev' ]]; then
+            # Helm Release adını sunucudaki gerçek isimle (trade-vision-dev) eşitliyoruz
             echo "SERVICE_NAME=trade-vision-dev" >> $GITHUB_ENV
+            # Kubernetes içindeki kaynak adını (dev-trade-vision) tanımlıyoruz
             echo "K8S_DEPLOYMENT_NAME=dev-trade-vision" >> $GITHUB_ENV
             echo "DOCKER_IMAGE_REPO=255114580789.dkr.ecr.eu-central-1.amazonaws.com/trade-vision-dev" >> $GITHUB_ENV
             echo "env_x=dev" >> $GITHUB_ENV
@@ -135,22 +137,10 @@ jobs:
       - name: Check Deployment Status
         if: steps.helm_deploy.outcome == 'failure' || steps.helm_deploy.conclusion == 'failure'
         run: |
-          echo "Deployment failed. Fetching logs and events..."
-          echo "=== START: Describe Deployment ==="
-          kubectl describe deployment ${{ env.K8S_DEPLOYMENT_NAME }} -n ${{ env.namespace }}
-          echo "=== END: Describe Deployment ==="
-          echo "=== START: Get Events ==="
-          kubectl get events --namespace ${{ env.namespace }} --sort-by='.metadata.creationTimestamp'
-          echo "=== END: Get Events ==="
-          echo "=== START: Check Non-Running Pods ==="
-          kubectl get pods --namespace ${{ env.namespace }} -l app=${{ env.K8S_DEPLOYMENT_NAME }} -o json | jq -r '.items[] | select(.status.containerStatuses[]?.state.waiting?.reason == "CrashLoopBackOff") | .metadata.name + " - " + .status.containerStatuses[]?.state.waiting?.reason'
-          echo "=== END: Check Non-Running Pods ==="
-          echo "=== START: Logs of Non-Running Pods ==="
-          for pod in $(kubectl get pods --namespace ${{ env.namespace }} -l app=${{ env.K8S_DEPLOYMENT_NAME }} -o json | jq -r '.items[] | select(.status.containerStatuses[]?.state.waiting?.reason == "CrashLoopBackOff") | .metadata.name'); do
-            echo "Logs for pod $pod:"
-            kubectl logs $pod --namespace ${{ env.namespace }}
-          done
-          echo "=== END: Logs of Non-Running Pods ==="
+          echo "Deployment failed. Fetching logs..."
+          # Önce K8S_DEPLOYMENT_NAME ile deniyoruz, olmazsa SERVICE_NAME ile
+          kubectl describe deployment ${{ env.K8S_DEPLOYMENT_NAME }} -n ${{ env.namespace }} || kubectl describe deployment ${{ env.SERVICE_NAME }} -n ${{ env.namespace }}
+          kubectl get events --namespace ${{ env.namespace }} --sort-by='.metadata.creationTimestamp' | tail -n 20
 
       - name: Rollback on Failure
         if: steps.helm_deploy.outcome == 'failure' || steps.helm_deploy.conclusion == 'failure'
