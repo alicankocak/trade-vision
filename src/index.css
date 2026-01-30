@@ -1,1 +1,38 @@
-@import 'tailwindcss';
+@import "tailwindcss";
+
+/* Global Button Overrides - High Specificity */
+button.ant-btn.btn-primary-custom {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border: none !important;
+}
+
+button.ant-btn.btn-primary-custom:hover {
+    background-color: #e5e5e5 !important;
+    opacity: 0.9;
+}
+
+button.ant-btn.btn-secondary {
+    background-color: #3f3f46 !important;
+    color: #ffffff !important;
+    border: none !important;
+}
+
+button.ant-btn.btn-secondary:hover {
+    background-color: #52525b !important;
+}
+
+button.ant-btn.btn-third {
+    background-color: #9f9fa7 !important;
+    color: #ffffff !important;
+    border: none !important;
+}
+
+button.ant-btn.btn-third:hover {
+    background-color: #d4d4d8 !important;
+}
+
+/* Sidebar Selected Override - Nuclear Option */
+.ant-menu.ant-menu-dark .ant-menu-item-selected {
+    background-color: #262626 !important;
+}
