@@ -60,6 +60,7 @@ jobs:
           # Dünkü başarılı komut: helm upgrade --install trade-vision-dev
           helm upgrade --install ${{ env.SERVICE_NAME }} \
             -f ./devops/dev/trade-vision/trade-vision-values.yaml \
+            -f ./helm-values.yaml \
             --namespace ${{ env.namespace }} \
             --set image.tag=${{ env.GIT_COMMIT }} \
             ./devops --wait --timeout 600s

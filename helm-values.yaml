@@ -1,0 +1,15 @@
+# Local Helm values override for Next.js Standalone
+# This file overrides values from the remote devops repo
+
+# Override startup command for Next.js standalone mode
+# We try both common locations for command override
+command: ["node", "server.js"]
+
+image:
+  command: ["node", "server.js"]
+
+# Vault Annotation Fix (Placeholder)
+# If there is a syntax error with ':' in Vault annotations, ensure they are quoted.
+# Example fix (uncomment and adapt if you know the exact key):
+# podAnnotations:
+#   vault.hashicorp.com/agent-inject-secret-config: "path/to/secret"
