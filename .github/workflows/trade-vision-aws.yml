@@ -134,16 +134,16 @@ jobs:
         run: |
           echo "Deployment failed. Fetching logs and events..."
           echo "=== START: Describe Deployment ==="
-          kubectl describe deployment ${{ env.APP_NAME }}-${{ env.env_x }} -n ${{ env.namespace }}
+          kubectl describe deployment ${{ env.SERVICE_NAME }} -n ${{ env.namespace }}
           echo "=== END: Describe Deployment ==="
           echo "=== START: Get Events ==="
           kubectl get events --namespace ${{ env.namespace }} --sort-by='.metadata.creationTimestamp'
           echo "=== END: Get Events ==="
           echo "=== START: Check Non-Running Pods ==="
-          kubectl get pods --namespace ${{ env.namespace }} -l app=${{ env.APP_NAME }}-${{ env.env_x }} -o json | jq -r '.items[] | select(.status.containerStatuses[]?.state.waiting?.reason == "CrashLoopBackOff") | .metadata.name + " - " + .status.containerStatuses[]?.state.waiting?.reason'
+          kubectl get pods --namespace ${{ env.namespace }} -l app=${{ env.SERVICE_NAME }} -o json | jq -r '.items[] | select(.status.containerStatuses[]?.state.waiting?.reason == "CrashLoopBackOff") | .metadata.name + " - " + .status.containerStatuses[]?.state.waiting?.reason'
           echo "=== END: Check Non-Running Pods ==="
           echo "=== START: Logs of Non-Running Pods ==="
-          for pod in $(kubectl get pods --namespace ${{ env.namespace }} -l app=${{ env.APP_NAME }}-${{ env.env_x }} -o json | jq -r '.items[] | select(.status.containerStatuses[]?.state.waiting?.reason == "CrashLoopBackOff") | .metadata.name'); do
+          for pod in $(kubectl get pods --namespace ${{ env.namespace }} -l app=${{ env.SERVICE_NAME }} -o json | jq -r '.items[] | select(.status.containerStatuses[]?.state.waiting?.reason == "CrashLoopBackOff") | .metadata.name'); do
             echo "Logs for pod $pod:"
             kubectl logs $pod --namespace ${{ env.namespace }}
           done
