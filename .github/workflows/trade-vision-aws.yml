@@ -48,21 +48,21 @@ jobs:
       - name: Creating Environment Variables
         run: |
           if [[ "${{ github.ref }}" == 'refs/heads/dev' ]] || [[ "${{ inputs.action }}" == 'redeploy' && "${{ inputs.environment }}" == 'dev' ]]; then
-            echo "SERVICE_NAME=trade-vision-dev" >> $GITHUB_ENV
+            echo "SERVICE_NAME=dev-trade-vision" >> $GITHUB_ENV
             echo "DOCKER_IMAGE_REPO=255114580789.dkr.ecr.eu-central-1.amazonaws.com/trade-vision-dev" >> $GITHUB_ENV
             echo "env_x=dev" >> $GITHUB_ENV
             echo "space_x=dev" >> $GITHUB_ENV
             echo "namespace=dcs-online-dev" >> $GITHUB_ENV
             echo "CLUSTER_NAME=atez-dev-cluster" >> $GITHUB_ENV
           elif [[ "${{ github.ref }}" == 'refs/heads/test/v1' ]] || [[ "${{ inputs.action }}" == 'redeploy' && "${{ inputs.environment }}" == 'test' ]]; then
-            echo "SERVICE_NAME=trade-vision-test-v1" >> $GITHUB_ENV
+            echo "SERVICE_NAME=test-v1-trade-vision" >> $GITHUB_ENV
             echo "DOCKER_IMAGE_REPO=255114580789.dkr.ecr.eu-central-1.amazonaws.com/trade-vision-test" >> $GITHUB_ENV
             echo "env_x=test-v1" >> $GITHUB_ENV
             echo "space_x=test-v1" >> $GITHUB_ENV
             echo "namespace=dcs-online-test" >> $GITHUB_ENV
             echo "CLUSTER_NAME=atez-dev-cluster" >> $GITHUB_ENV
           elif [[ "${{ github.ref }}" == 'refs/heads/release/v1' ]] || [[ "${{ inputs.action }}" == 'redeploy' && "${{ inputs.environment }}" == 'production' ]]; then
-            echo "SERVICE_NAME=trade-vision-v1" >> $GITHUB_ENV
+            echo "SERVICE_NAME=v1-trade-vision" >> $GITHUB_ENV
             echo "DOCKER_IMAGE_REPO=255114580789.dkr.ecr.eu-central-1.amazonaws.com/trade-vision-v1" >> $GITHUB_ENV
             echo "env_x=v1" >> $GITHUB_ENV
             echo "space_x=prod" >> $GITHUB_ENV
@@ -112,17 +112,17 @@ jobs:
       - name: Check Helm Release Status
         run: |
           set +e
-          helm status ${{ env.APP_NAME }}-${{ env.env_x }} --namespace ${{ env.namespace }} > helm_status.txt
+          helm status ${{ env.SERVICE_NAME }} --namespace ${{ env.namespace }} > helm_status.txt
           if grep -q "another operation" helm_status.txt; then
             echo "Another operation is in progress. Rolling back to previous release."
-            helm rollback ${{ env.APP_NAME }}-${{ env.env_x }} 0 --namespace ${{ env.namespace }}
+            helm rollback ${{ env.SERVICE_NAME }} 0 --namespace ${{ env.namespace }}
           fi
           set -e
 
       - name: Deploy to Kubernetes with Helm
         id: helm_deploy
         run: |
-          helm upgrade --install ${{ env.APP_NAME }}-${{ env.env_x }} \
+          helm upgrade --install ${{ env.SERVICE_NAME }} \
             -f ./devops/${{ env.space_x }}/trade-vision/trade-vision-values.yaml \
             --namespace ${{ env.namespace }} \
             --set image.tag=${{ env.IMAGE_TAG }} \
@@ -153,7 +153,7 @@ jobs:
         if: steps.helm_deploy.outcome == 'failure' || steps.helm_deploy.conclusion == 'failure'
         run: |
           echo "Rolling back deployment..."
-          helm rollback ${{ env.APP_NAME }}-${{ env.env_x }} 0 --namespace ${{ env.namespace }}
+          helm rollback ${{ env.SERVICE_NAME }} 0 --namespace ${{ env.namespace }}
           echo "Marking the job as failed"
           exit 1
 
