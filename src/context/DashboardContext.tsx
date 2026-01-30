@@ -119,37 +119,38 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const [isEditing, setEditing] = useState(false);
     const [drawerVisible, setDrawerVisible] = useState(false);
     const [activeSegment, setActiveSegment] = useState<Segment>('B2B');
+    const [dashboards, setDashboards] = useState<DashboardConfig[]>([DEFAULT_DASHBOARD]);
+    const [currentDashboardId, setCurrentDashboardId] = useState<string>('default');
 
-    // Load from local storage or use default
-    const [dashboards, setDashboards] = useState<DashboardConfig[]>(() => {
+    useEffect(() => {
         try {
             const saved = localStorage.getItem('tradevision_dashboards');
-            const parsed = saved ? JSON.parse(saved) : null;
-            if (parsed && Array.isArray(parsed) && parsed.length > 0) {
-                // Determine if old format or new format
-                // Simple check: check if layouts.B2B exists
-                const first = parsed[0];
-                if (first.layouts && !first.layouts.B2B) {
-                    // Migration logic: wrapping old layout into B2B
-                    console.log("Migrating dashboard to Segment format...");
-                    return [{
-                        ...first,
-                        layouts: { B2B: first.layouts, B2C: { lg: DEFAULT_LAYOUT_LG_B2C } },
-                        widgets: { B2B: first.widgets || [], B2C: DEFAULT_DASHBOARD.widgets.B2C }
-                    }];
-                }
-                return parsed;
+            const savedId = localStorage.getItem('tradevision_current_dashboard');
+
+            if (savedId) {
+                setCurrentDashboardId(savedId);
             }
-            return [DEFAULT_DASHBOARD];
+
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                if (parsed && Array.isArray(parsed) && parsed.length > 0) {
+                    const first = parsed[0];
+                    if (first.layouts && !first.layouts.B2B) {
+                        console.log("Migrating dashboard to Segment format...");
+                        setDashboards([{
+                            ...first,
+                            layouts: { B2B: first.layouts, B2C: { lg: DEFAULT_LAYOUT_LG_B2C } },
+                            widgets: { B2B: first.widgets || [], B2C: DEFAULT_DASHBOARD.widgets.B2C }
+                        }]);
+                    } else {
+                        setDashboards(parsed);
+                    }
+                }
+            }
         } catch (e) {
             console.error("Failed to load dashboards", e);
-            return [DEFAULT_DASHBOARD];
         }
-    });
-
-    const [currentDashboardId, setCurrentDashboardId] = useState<string>(() => {
-        return localStorage.getItem('tradevision_current_dashboard') || 'default';
-    });
+    }, []);
 
     const currentDashboard = useMemo(() => {
         // SAFE MODE: Bypass logic to ensure render

@@ -11,7 +11,7 @@ import {
     SunOutlined,
     MoonOutlined
 } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext'; // Import context
 import NotificationDrawer from '../notifications/NotificationDrawer';
@@ -26,7 +26,7 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ collapsed, onToggle }) => {
     const [drawerOpen, setDrawerOpen] = React.useState(false);
     const { isDarkMode, toggleTheme } = useTheme(); // Use context
-    const navigate = useNavigate();
+    const router = useRouter();
     const { user, logout, login } = useAuth(); // Exposed login for debugging if needed
 
     // Profile Dropdown Menu
@@ -48,7 +48,7 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle }) => {
             key: '1',
             icon: <UserOutlined />,
             label: 'Profilim',
-            onClick: () => navigate('/profile'),
+            onClick: () => router.push('/profile'),
         },
         {
             key: '2',
@@ -80,7 +80,7 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle }) => {
             onClick: () => {
                 logout();
                 message.info('Çıkış yapıldı (Mock)');
-                navigate('/login');
+                router.push('/login');
             }
         },
     ];

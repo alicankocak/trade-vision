@@ -1,5 +1,5 @@
 # ============================================
-# TradeVision - TanStack Start + Prisma
+# TradeVision - Next.js App Router + Prisma
 # Multi-stage Docker build
 # ============================================
 
@@ -34,9 +34,12 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Copy prisma schema and generate client
-# Provide dummy DATABASE_URL for prisma generate (doesn't connect, just generates types)
+# Provide dummy DATABASE_URL for prisma generate
 COPY prisma ./prisma/
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy?schema=public"
+# Disable telemetry during build
+ENV NEXT_TELEMETRY_DISABLED=1
+
 RUN npx prisma generate
 
 # Build the application
@@ -52,25 +55,27 @@ WORKDIR /app
 # Set production environment
 ENV NODE_ENV=production
 ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+# Disable telemetry in production
+ENV NEXT_TELEMETRY_DISABLED=1
 
 # Create non-root user for security
 RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 tanstack
+RUN adduser --system --uid 1001 nextjs
 
-# Copy built application
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./package.json
+# Copy public folder
+COPY --from=builder /app/public ./public
 
-# Copy Prisma files for migrations (if needed at runtime)
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/src/generated ./src/generated
+# Automatically leverage output traces to reduce image size
+# https://nextjs.org/docs/advanced-features/output-file-tracing
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Set ownership
-RUN chown -R tanstack:nodejs /app
+# Copy Prisma schema for runtime if needed (optional with standalone, but good for safety)
+# COPY --from=builder /app/prisma ./prisma
 
 # Switch to non-root user
-USER tanstack
+USER nextjs
 
 # Expose the application port
 EXPOSE 3000
@@ -80,4 +85,4 @@ EXPOSE 3000
 #   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
 
 # Start the application
-CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "3000"]
+CMD ["node", "server.js"]

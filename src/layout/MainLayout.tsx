@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react'
 import { Layout, Menu, theme } from 'antd'
 import {
@@ -5,10 +7,10 @@ import {
   FileTextOutlined,
   TeamOutlined,
 } from '@ant-design/icons'
-import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import Header from '../components/layout/Header'
-import { useAuth } from '../context/AuthContext'
-import { useTheme } from '../context/ThemeContext'
+import { usePathname, useRouter } from 'next/navigation'
+import Header from '@/components/layout/Header'
+import { useAuth } from '@/context/AuthContext'
+import { useTheme } from '@/context/ThemeContext'
 
 const { Sider, Content } = Layout
 
@@ -23,8 +25,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   } = theme.useToken()
   const { isAdmin } = useAuth() // Added isAdmin
   const { isDarkMode } = useTheme()
-  const navigate = useNavigate()
-  const location = useLocation()
+  const router = useRouter()
+  const pathname = usePathname()
 
   const menuItems = [
     {
@@ -94,11 +96,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         <Menu
           theme={isDarkMode ? 'dark' : 'light'}
           mode="inline"
-          defaultSelectedKeys={[location.pathname]}
+          defaultSelectedKeys={[pathname]}
           items={menuItems}
           className="h-full border-r-0"
           style={{ paddingTop: '1rem', background: 'transparent' }} // Let Sider bg control it
-          onClick={({ key }) => navigate(key)}
+          onClick={({ key }) => router.push(key)}
         />
       </Sider>
 
@@ -119,7 +121,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             overflow: 'initial',
           }}
         >
-          <Outlet />
+          {children}
         </Content>
       </Layout>
     </Layout>
