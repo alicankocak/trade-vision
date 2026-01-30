@@ -1,5 +1,5 @@
 name: Trade Vision EKS Build And Deploy
-run-name: Deployment triggered for branch ${{ github.ref }} by @${{ github.actor }}
+run-name: Deployment triggered by @${{ github.actor }}
 
 on:
   push:
@@ -19,26 +19,22 @@ jobs:
 
       - name: Creating Environment Variables
         run: |
-          # Dünkü başarılı logdaki değerlerin aynısını basıyoruz
           echo "SERVICE_NAME=trade-vision-dev" >> $GITHUB_ENV
           echo "namespace=dcs-online-dev" >> $GITHUB_ENV
           echo "CLUSTER_NAME=atez-dev-cluster" >> $GITHUB_ENV
-          echo "APP_NAME=trade-vision" >> $GITHUB_ENV
           echo "AWS_REGION=eu-central-1" >> $GITHUB_ENV
           echo "AWS_ECR=255114580789.dkr.ecr.eu-central-1.amazonaws.com" >> $GITHUB_ENV
           echo "DOCKER_IMAGE_REPO=255114580789.dkr.ecr.eu-central-1.amazonaws.com/trade-vision-dev" >> $GITHUB_ENV
-          echo "GIT_COMMIT=${{ github.sha }}" >> $GITHUB_ENV
 
       - name: AWS ECR login
-        run: |
-          aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.AWS_ECR }}
+        run: aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.AWS_ECR }}
 
       - name: Docker Build, Tag and Push
         run: |
-          docker build . -t ${{ env.SERVICE_NAME }}:${{ env.GIT_COMMIT }} -f Dockerfile --network host --no-cache
-          docker tag ${{ env.SERVICE_NAME }}:${{ env.GIT_COMMIT }} ${{ env.DOCKER_IMAGE_REPO }}:${{ env.GIT_COMMIT }}
-          docker tag ${{ env.SERVICE_NAME }}:${{ env.GIT_COMMIT }} ${{ env.DOCKER_IMAGE_REPO }}:latest
-          docker push ${{ env.DOCKER_IMAGE_REPO }}:${{ env.GIT_COMMIT }}
+          docker build . -t ${{ env.SERVICE_NAME }}:${{ github.sha }} -f Dockerfile --network host --no-cache
+          docker tag ${{ env.SERVICE_NAME }}:${{ github.sha }} ${{ env.DOCKER_IMAGE_REPO }}:${{ github.sha }}
+          docker tag ${{ env.SERVICE_NAME }}:${{ github.sha }} ${{ env.DOCKER_IMAGE_REPO }}:latest
+          docker push ${{ env.DOCKER_IMAGE_REPO }}:${{ github.sha }}
           docker push ${{ env.DOCKER_IMAGE_REPO }}:latest
 
       - name: Checkout Helm Charts
@@ -57,27 +53,24 @@ jobs:
       - name: Deploy to Kubernetes
         id: helm_deploy
         run: |
-          # Dünkü başarılı komut: helm upgrade --install trade-vision-dev
+          # Next.js standalone için node server.js kullanıyoruz
+          # Vault hatasını engellemek için komutu tek tırnak içinde gönderiyoruz
           helm upgrade --install ${{ env.SERVICE_NAME }} \
             -f ./devops/dev/trade-vision/trade-vision-values.yaml \
-            -f ./helm-values.yaml \
             --namespace ${{ env.namespace }} \
-            --set image.tag=${{ env.GIT_COMMIT }} \
+            --set image.tag=${{ github.sha }} \
+            --set-string 'args[2]=i=0; while [ $i -lt 30 ]; do if [ -f /vault/secrets/config ]; then break; fi; echo Waiting...; sleep 2; i=$((i+1)); done; . /vault/secrets/config && node server.js' \
             ./devops --wait --timeout 600s
         continue-on-error: true
 
       - name: Check Status on Failure
         if: steps.helm_deploy.outcome == 'failure'
         run: |
-          echo "Hata durumunda dünkü doğru ismi kontrol ediyoruz..."
-          kubectl describe deployment ${{ env.SERVICE_NAME }} -n ${{ env.namespace }} || kubectl get all -n ${{ env.namespace }}
+          kubectl get deployments -n ${{ env.namespace }}
+          kubectl get events -n ${{ env.namespace }} --sort-by='.metadata.creationTimestamp' | tail -n 10
 
       - name: Rollback on Failure
         if: steps.helm_deploy.outcome == 'failure'
         run: |
           helm rollback ${{ env.SERVICE_NAME }} 0 --namespace ${{ env.namespace }}
           exit 1
-
-      - name: Confirm Status
-        if: steps.helm_deploy.outcome == 'success'
-        run: echo "Deployment successful"
