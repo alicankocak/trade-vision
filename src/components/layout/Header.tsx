@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Avatar, Dropdown, Layout, Badge, message, Switch } from 'antd';
+import { Button, Avatar, Dropdown, Layout, Badge, message } from 'antd';
 import type { MenuProps } from 'antd';
 import {
     MenuUnfoldOutlined,
@@ -112,12 +112,13 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle }) => {
                 {/* Right Section: Actions */}
                 <div className="flex items-center gap-4">
                     {/* Theme Toggle */}
-                    <Switch
-                        checkedChildren={<MoonOutlined className="text-yellow-400" />}
-                        unCheckedChildren={<SunOutlined className="text-orange-400" />}
-                        checked={isDarkMode}
-                        onChange={toggleTheme}
-                        className={isDarkMode ? 'bg-gray-700' : 'bg-gray-300'}
+                    {/* Theme Toggle Icon (Update 20.0) */}
+                    <Button
+                        type="text"
+                        icon={isDarkMode ? <MoonOutlined /> : <SunOutlined />}
+                        onClick={toggleTheme}
+                        style={{ fontSize: '20px', color: isDarkMode ? '#ffffff' : '#000000' }}
+                        className="flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/10 rounded-full w-10 h-10 transition-all"
                     />
 
                     {/* Notification Bell */}

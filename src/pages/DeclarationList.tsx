@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Table, Input, Button, Tag, Dropdown, Space, Typography, Empty, Tooltip, Checkbox, Popover, Drawer, Divider } from 'antd';
+import { Table, Input, Button, Tag, Dropdown, Space, Typography, Empty, Tooltip, Checkbox, Popover, Drawer, Divider, Spin, notification } from 'antd';
 import {
     SearchOutlined,
     MoreOutlined,
@@ -10,7 +10,11 @@ import {
     InfoCircleOutlined,
     DownloadOutlined,
     PlusOutlined,
-    LoadingOutlined
+    LoadingOutlined,
+    SyncOutlined,
+    CheckCircleOutlined,
+    FileTextOutlined,
+    ClockCircleOutlined
 } from '@ant-design/icons';
 import { useTheme } from '../context/ThemeContext'; // Import context
 import type { ColumnsType } from 'antd/es/table';
@@ -26,6 +30,24 @@ const DeclarationList: React.FC = () => {
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const [searchText, setSearchText] = useState('');
     const [loading, setLoading] = useState(false);
+    const [isChecking, setIsChecking] = useState(false);
+
+    const handleStatusCheck = () => {
+        setIsChecking(true);
+        setTimeout(() => {
+            setIsChecking(false);
+            notification.success({
+                message: 'İşlem Tamamlandı',
+                description: 'Statü kontrol işlemi tamamlanmıştır.',
+                placement: 'topRight',
+                style: {
+                    backgroundColor: isDarkMode ? '#141414' : '#ffffff',
+                    color: isDarkMode ? '#ffffff' : '#000000',
+                    border: `1px solid ${isDarkMode ? '#303030' : '#e2e2e4'}`,
+                },
+            });
+        }, 2500);
+    };
 
     // Drawer State
     const [drawerVisible, setDrawerVisible] = useState(false);
@@ -38,12 +60,30 @@ const DeclarationList: React.FC = () => {
     const hasActiveFilters = intacFilter !== 'All' || riskFilter.length > 0;
     const filterCount = (intacFilter !== 'All' ? 1 : 0) + riskFilter.length;
 
+    const [activeSegment, setActiveSegment] = useState<'B2B' | 'B2C'>('B2B');
+    const [senderSearchText, setSenderSearchText] = useState('');
+    const [buyerSearchText, setBuyerSearchText] = useState('');
+
+    // B2C Mock Data (Simulated)
+    const b2cData: Declaration[] = [
+        { key: '901', no: 'TR-B2C-001', seller: 'Amazon EU', status: 'Completed', buyer: 'Ali Yılmaz', mlRisks: [], absoluteRisks: [], potentialRisks: [], intacDate: '2024-03-21' },
+        { key: '902', no: 'TR-B2C-002', seller: 'AliExpress', status: 'Pending', buyer: 'Ayşe Demir', mlRisks: ['ML-101'], absoluteRisks: [], potentialRisks: ['Potansiyel Risk 1'], intacDate: '-' },
+        { key: '903', no: 'TR-B2C-003', seller: 'Ebay Seller', status: 'Completed', buyer: 'Mehmet Kaya', mlRisks: [], absoluteRisks: [], potentialRisks: [], intacDate: '2024-03-23' },
+    ];
+
     // Filter Logic
-    const filteredData = declarationsList.filter((item) => {
-        // Text Search
-        const matchesSearch =
+    const currentDataSource = activeSegment === 'B2B' ? declarationsList : b2cData;
+
+    const filteredData = currentDataSource.filter((item) => {
+
+        // Global Text Search
+        const matchesGlobalSearch =
             item.no.toLowerCase().includes(searchText.toLowerCase()) ||
             item.buyer.toLowerCase().includes(searchText.toLowerCase());
+
+        // Column Specific Filters
+        const matchesSender = item.seller.toLowerCase().includes(senderSearchText.toLowerCase());
+        const matchesBuyer = item.buyer.toLowerCase().includes(buyerSearchText.toLowerCase());
 
         // Intaç Filter
         const matchesIntac =
@@ -51,7 +91,7 @@ const DeclarationList: React.FC = () => {
                 intacFilter === 'Received' ? item.intacDate !== '-' :
                     item.intacDate === '-';
 
-        // Risk Filter (Checks if any selected risk exists in item's risk arrays)
+        // Risk Filter
         const matchesRisk = riskFilter.length === 0 ? true :
             riskFilter.some(filter =>
                 item.absoluteRisks?.includes(filter) ||
@@ -59,11 +99,13 @@ const DeclarationList: React.FC = () => {
                 item.mlRisks?.includes(filter)
             );
 
-        return matchesSearch && matchesIntac && matchesRisk;
+        return matchesGlobalSearch && matchesIntac && matchesRisk && matchesSender && matchesBuyer;
     });
 
     // KPI Calculations
+    const totalDeclarations = filteredData.length;
     const totalAbsoluteRisk = filteredData.reduce((acc, item) => acc + (item.absoluteRisks?.length || 0), 0);
+    const totalPendingIntac = filteredData.filter(item => item.intacDate === '-').length;
     const totalPotentialRisk = filteredData.reduce((acc, item) => acc + (item.potentialRisks?.length || 0), 0);
     const totalMLRisk = filteredData.reduce((acc, item) => acc + (item.mlRisks?.length || 0), 0);
 
@@ -85,6 +127,9 @@ const DeclarationList: React.FC = () => {
     const clearFilters = () => {
         setIntacFilter('All');
         setRiskFilter([]);
+        setSenderSearchText('');
+        setBuyerSearchText('');
+        setSearchText('');
     };
 
     // Searching
@@ -116,6 +161,7 @@ const DeclarationList: React.FC = () => {
     // Mega Menu Content
     const filterMenuContent = (
         <div className="w-[800px] flex flex-col h-[400px]">
+            {/* ... keeping existing huge mega menu content ... */}
             {/* Header */}
             <div className={`p-4 border-b flex justify-between items-center shrink-0 ${isDarkMode ? 'border-[#303030] bg-[#141414] text-white' : 'border-[#e2e2e4] bg-white'}`}>
                 <span className="font-bold text-lg">Gelişmiş Filtreleme</span>
@@ -229,9 +275,45 @@ const DeclarationList: React.FC = () => {
             render: (text) => <span className={`font-semibold ${isDarkMode ? 'text-white' : ''}`}>{text}</span>,
         },
         {
-            title: 'Alıcı Adı',
+            title: (
+                <div className="flex flex-col gap-2 pb-2">
+                    <span>Gönderici Adı</span>
+                    <Input
+                        placeholder="Ara..."
+                        size="small"
+                        prefix={<SearchOutlined className="text-gray-400" />}
+                        value={senderSearchText}
+                        onChange={e => setSenderSearchText(e.target.value)}
+                        className={`rounded-lg ${isDarkMode ? 'bg-[#1f1f1f] border-[#303030] text-white' : ''}`}
+                        allowClear
+                        onClick={e => e.stopPropagation()}
+                    />
+                </div>
+            ),
+            dataIndex: 'seller',
+            key: 'seller',
+            width: 200,
+            render: (text) => <span className={isDarkMode ? 'text-gray-300' : ''}>{text}</span>,
+        },
+        {
+            title: (
+                <div className="flex flex-col gap-2 pb-2">
+                    <span>Alıcı Adı</span>
+                    <Input
+                        placeholder="Ara..."
+                        size="small"
+                        prefix={<SearchOutlined className="text-gray-400" />}
+                        value={buyerSearchText}
+                        onChange={e => setBuyerSearchText(e.target.value)}
+                        className={`rounded-lg ${isDarkMode ? 'bg-[#1f1f1f] border-[#303030] text-white' : ''}`}
+                        allowClear
+                        onClick={e => e.stopPropagation()}
+                    />
+                </div>
+            ),
             dataIndex: 'buyer',
             key: 'buyer',
+            width: 200,
             render: (text) => <span className={isDarkMode ? 'text-gray-300' : ''}>{text}</span>,
         },
         {
@@ -322,13 +404,19 @@ const DeclarationList: React.FC = () => {
                                     icon: <EyeOutlined />,
                                     onClick: () => navigate(`/declarations/${record.key}`),
                                 },
+                                {
+                                    key: '2',
+                                    label: 'Statü Güncelle',
+                                    icon: <SyncOutlined />,
+                                    onClick: () => handleStatusCheck(),
+                                },
                             ],
                         }}
                         trigger={['click']}
                     >
                         <Button type="text" shape="circle" icon={<MoreOutlined className={isDarkMode ? 'text-white' : ''} />} />
                     </Dropdown>
-                </div>
+                </div >
             ),
         },
     ];
@@ -377,6 +465,171 @@ const DeclarationList: React.FC = () => {
                 </div>
 
                 <Space>
+                    {/* Actions moved to Table Header */}
+                </Space>
+            </div>
+
+            {/* Segment Toggle */}
+            <div className="flex items-center">
+                <div className={`p-1 rounded-lg inline-flex ${isDarkMode ? 'bg-gray-800' : 'bg-gray-200/50'}`}>
+                    <button
+                        onClick={() => setActiveSegment('B2B')}
+                        className={`px-6 py-1.5 rounded-lg text-sm font-bold transition-all duration-200 ${activeSegment === 'B2B'
+                            ? (isDarkMode ? 'bg-[#303030] text-white shadow-sm' : 'bg-white text-gray-900 shadow-sm')
+                            : 'text-gray-500 hover:text-gray-700'
+                            }`}
+                    >
+                        B2B
+                    </button>
+                    <button
+                        onClick={() => setActiveSegment('B2C')}
+                        className={`px-6 py-1.5 rounded-lg text-sm font-bold transition-all duration-200 ${activeSegment === 'B2C'
+                            ? (isDarkMode ? 'bg-[#303030] text-white shadow-sm' : 'bg-white text-gray-900 shadow-sm')
+                            : 'text-gray-500 hover:text-gray-700'
+                            }`}
+                    >
+                        B2C
+                    </button>
+                </div>
+            </div>
+
+            {/* KPI Cards - 5 Card Layout (Update 18.0) */}
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+
+                {/* Card 1: Total Declarations (Light: Navy | Dark: Cyan Theme) */}
+                <div className={`p-4 rounded-2xl relative overflow-hidden transition-all duration-300 flex justify-between items-start ${isDarkMode ? 'bg-slate-900 shadow-lg shadow-cyan-900/10' : 'bg-[#0f172a] shadow-sm text-white'}`}>
+                    <div className="flex flex-col justify-between h-full z-10">
+                        <div>
+                            <span className={`text-3xl font-bold block ${isDarkMode ? 'text-cyan-400' : 'text-white'}`}>{totalDeclarations}</span>
+                            <span className={`text-xs font-light tracking-wide mt-1 block opacity-70 ${isDarkMode ? 'text-gray-300' : 'text-gray-300'}`}>Toplam Beyanname</span>
+                        </div>
+                        <div className="mt-4 flex items-center gap-2">
+                            <span className="text-xs font-medium text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                +12.5%
+                            </span>
+                            <span className="text-[10px] opacity-60">bu hafta</span>
+                        </div>
+                    </div>
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0 ${isDarkMode ? 'bg-cyan-500/20 text-cyan-400' : 'bg-white/10 text-cyan-200'}`}>
+                        <FileTextOutlined />
+                    </div>
+                </div>
+
+                {/* Card 2: Absolute Risk (Light: White | Dark: Pink Theme) */}
+                <div className={`p-4 rounded-2xl relative overflow-hidden transition-all duration-300 flex justify-between items-start ${isDarkMode ? 'bg-[#2a0f1b] shadow-lg shadow-pink-900/10' : 'bg-white border border-[#e2e2e4] shadow-sm'}`}>
+                    <div className="flex flex-col justify-between h-full z-10">
+                        <div>
+                            <span className={`text-3xl font-bold block ${isDarkMode ? 'text-pink-500' : 'text-gray-900'}`}>{totalAbsoluteRisk}</span>
+                            <span className={`text-xs font-light tracking-wide mt-1 block opacity-70 ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>Mutlak Risk</span>
+                        </div>
+                        <div className="mt-4 flex flex-col gap-1">
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-medium text-rose-500 bg-rose-500/10 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                    +2.1%
+                                </span>
+                                <span className={`text-[10px] opacity-60 ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`}>geçen aya göre</span>
+                            </div>
+                            <span className={`text-[10px] font-medium mt-1 ${isDarkMode ? 'text-pink-200/70' : 'text-gray-600'}`}>
+                                Bulgu sayısı: 12
+                            </span>
+                        </div>
+                    </div>
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0 ${isDarkMode ? 'bg-pink-600/20 text-pink-500' : 'bg-rose-50 text-rose-600'}`}>
+                        <WarningOutlined />
+                    </div>
+                </div>
+
+                {/* Card 3: Potential Risk (Light: White | Dark: Orange Theme) */}
+                <div className={`p-4 rounded-2xl relative overflow-hidden transition-all duration-300 flex justify-between items-start ${isDarkMode ? 'bg-[#431407] shadow-lg shadow-orange-900/10' : 'bg-white border border-[#e2e2e4] shadow-sm'}`}>
+                    <div className="flex flex-col justify-between h-full z-10">
+                        <div>
+                            <span className={`text-3xl font-bold block ${isDarkMode ? 'text-orange-500' : 'text-gray-900'}`}>{totalPotentialRisk}</span>
+                            <span className={`text-xs font-light tracking-wide mt-1 block opacity-70 ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>Potansiyel Risk</span>
+                        </div>
+                        <div className="mt-4 flex flex-col gap-1">
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-medium text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                    -5.4%
+                                </span>
+                                <span className={`text-[10px] opacity-60 ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`}>bu hafta</span>
+                            </div>
+                            <span className={`text-[10px] font-medium mt-1 ${isDarkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
+                                Bulgu sayısı: 45
+                            </span>
+                        </div>
+                    </div>
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0 ${isDarkMode ? 'bg-orange-600/20 text-orange-500' : 'bg-orange-50 text-orange-600'}`}>
+                        <InfoCircleOutlined />
+                    </div>
+                </div>
+
+                {/* Card 4: AI & ML (Light: White | Dark: Purple Theme) */}
+                <div className={`p-4 rounded-2xl relative overflow-hidden transition-all duration-300 flex justify-between items-start ${isDarkMode ? 'bg-[#3b0764] shadow-lg shadow-purple-900/10' : 'bg-white border border-[#e2e2e4] shadow-sm'}`}>
+                    <div className="flex flex-col justify-between h-full z-10">
+                        <div>
+                            <span className={`text-3xl font-bold block ${isDarkMode ? 'text-purple-400' : 'text-gray-900'}`}>{totalMLRisk}</span>
+                            <span className={`text-xs font-light tracking-wide mt-1 block opacity-70 ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>AI & ML Bulgusu</span>
+                        </div>
+                        <div className="mt-4 flex flex-col gap-1">
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-medium text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                    +18.2%
+                                </span>
+                                <span className={`text-[10px] opacity-60 ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`}>yeni model ile</span>
+                            </div>
+                            <span className={`text-[10px] font-medium mt-1 ${isDarkMode ? 'text-purple-200/70' : 'text-gray-600'}`}>
+                                Bulgu sayısı: 8
+                            </span>
+                        </div>
+                    </div>
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0 ${isDarkMode ? 'bg-purple-600/20 text-purple-400' : 'bg-purple-50 text-purple-600'}`}>
+                        <CheckCircleOutlined />
+                    </div>
+                </div>
+
+                {/* Card 5: Pending Intac (Light: White | Dark: Green Theme) */}
+                <div className={`p-4 rounded-2xl relative overflow-hidden transition-all duration-300 flex justify-between items-start ${isDarkMode ? 'bg-[#052e16] shadow-lg shadow-emerald-900/10' : 'bg-white border border-[#e2e2e4] shadow-sm'}`}>
+                    <div className="flex flex-col justify-between h-full z-10">
+                        <div>
+                            <span className={`text-3xl font-bold block ${isDarkMode ? 'text-emerald-400' : 'text-gray-900'}`}>{totalPendingIntac}</span>
+                            <span className={`text-xs font-light tracking-wide mt-1 block opacity-70 ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>İntaç Bekleyen</span>
+                        </div>
+                        <div className="mt-4 flex items-center gap-2">
+                            <span className="text-xs font-medium text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                ~1.2%
+                            </span>
+                            <span className={`text-[10px] opacity-60 ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`}>sabit seyir</span>
+                        </div>
+                    </div>
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0 ${isDarkMode ? 'bg-emerald-500/20 text-emerald-400' : 'bg-green-50 text-green-600'}`}>
+                        <ClockCircleOutlined />
+                    </div>
+                </div>
+            </div>
+
+            <div className="p-4 rounded-lg border mb-4 shadow-sm flex flex-col md:flex-row gap-4 justify-between items-center transition-colors duration-200"
+                style={{ backgroundColor: searchBg, borderColor: searchBorder }}
+            >
+                <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto items-center">
+                    <Input
+                        placeholder="Beyanname No, Firma veya Tutar Ara..."
+                        prefix={<SearchOutlined className={isDarkMode ? 'text-gray-400' : 'text-gray-400'} />}
+                        className="w-[280px]"
+                        value={searchText}
+                        onChange={handleSearch}
+                        allowClear
+                        style={{ backgroundColor: isDarkMode ? '#1f1f1f' : '#fff', borderColor: isDarkMode ? '#303030' : '#d9d9d9', color: isDarkMode ? '#fff' : '#000' }}
+                    />
+                </div>
+
+                <div className="flex gap-2 items-center">
+                    <Button
+                        icon={<ExportOutlined />}
+                        style={{ backgroundColor: isDarkMode ? '#9f9fa7' : 'transparent', color: isDarkMode ? '#ffffff' : 'inherit', border: isDarkMode ? 'none' : '' }}
+                    >
+                        Dışa Aktar
+                    </Button>
+
                     <Popover
                         content={filterMenuContent}
                         trigger="click"
@@ -388,55 +641,41 @@ const DeclarationList: React.FC = () => {
                     >
                         <Button
                             icon={<FilterOutlined />}
-                            className={`transition-colors ${isDarkMode
-                                    ? 'bg-[#1f1f1f] border-[#303030] text-white hover:border-gray-500'
-                                    : hasActiveFilters ? 'bg-gray-100 text-black border-gray-300' : 'bg-black text-white'
-                                }`}
+                            style={{
+                                backgroundColor: isDarkMode ? '#3f3f46' : (hasActiveFilters ? '#f3f4f6' : '#000000'),
+                                color: isDarkMode ? '#ffffff' : (hasActiveFilters ? '#000000' : '#ffffff'),
+                                borderColor: isDarkMode ? '#3f3f46' : (hasActiveFilters ? '#d1d5db' : '#000000')
+                            }}
+                            className="transition-colors"
                         >
                             Gelişmiş Filtre {filterCount > 0 && `(${filterCount})`}
                         </Button>
                     </Popover>
-                    <Button icon={<ExportOutlined />} className={isDarkMode ? 'bg-[#1f1f1f] border-[#303030] text-white' : ''}>Dışa Aktar</Button>
-                </Space>
+
+                    {selectedRowKeys.length > 0 && (
+                        <Button
+                            icon={<CheckCircleOutlined />}
+                            onClick={handleStatusCheck}
+                            disabled={isChecking}
+                            style={{
+                                backgroundColor: isDarkMode ? '#3f3f46' : '#f4f4f5',
+                                color: isDarkMode ? '#ffffff' : '#000000',
+                                borderColor: isDarkMode ? '#3f3f46' : '#d4d4d8'
+                            }}
+                        >
+                            Statü Kontrol Et
+                        </Button>
+                    )}
+                </div>
             </div>
 
-            {/* Risk KPI Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className={`border p-4 rounded-lg flex flex-col items-center justify-center ${isDarkMode ? 'bg-[#1f1f1f] border-red-900/30' : 'bg-red-50 border-red-100'}`}>
-                    <span className="text-red-500 font-medium">Toplam Mutlak Risk</span>
-                    <span className="text-2xl font-bold text-red-600">{totalAbsoluteRisk}</span>
+            {/* Loading Overlay */}
+            {isChecking && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center flex-col gap-4">
+                    <Spin size="large" />
+                    <span className="text-white font-medium text-lg">Kontrol ediliyor...</span>
                 </div>
-                <div className={`border p-4 rounded-lg flex flex-col items-center justify-center ${isDarkMode ? 'bg-[#1f1f1f] border-orange-900/30' : 'bg-orange-50 border-orange-100'}`}>
-                    <span className="text-orange-500 font-medium">Toplam Potansiyel Risk</span>
-                    <span className="text-2xl font-bold text-orange-600">{totalPotentialRisk}</span>
-                </div>
-                <div className={`border p-4 rounded-lg flex flex-col items-center justify-center ${isDarkMode ? 'bg-[#1f1f1f] border-purple-900/30' : 'bg-purple-50 border-purple-100'}`}>
-                    <span className="text-purple-500 font-medium">Toplam AI-ML Bulgusu</span>
-                    <span className="text-2xl font-bold text-purple-600">{totalMLRisk}</span>
-                </div>
-            </div>
-
-            <div className="p-4 rounded-lg border mb-4 shadow-sm flex flex-col md:flex-row gap-4 justify-between items-center transition-colors duration-200"
-                style={{ backgroundColor: searchBg, borderColor: searchBorder }}
-            >
-                <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
-                    <Input
-                        placeholder="Beyanname No, Firma veya Tutar Ara..."
-                        prefix={<SearchOutlined className={isDarkMode ? 'text-gray-400' : 'text-gray-400'} />}
-                        className="w-full md:w-80"
-                        value={searchText}
-                        onChange={handleSearch}
-                        allowClear
-                        style={{ backgroundColor: isDarkMode ? '#1f1f1f' : '#fff', borderColor: isDarkMode ? '#303030' : '#d9d9d9', color: isDarkMode ? '#fff' : '#000' }}
-                    />
-                </div>
-
-                <div className="flex gap-2">
-                    <Button type="primary" icon={<PlusOutlined />} onClick={() => { }} className={isDarkMode ? 'bg-white text-black' : 'bg-black'}>
-                        Yeni Beyanname
-                    </Button>
-                </div>
-            </div>
+            )}
 
             <div className="rounded-lg border shadow-sm overflow-hidden transition-colors duration-200"
                 style={{ backgroundColor: searchBg, borderColor: searchBorder }}
@@ -448,7 +687,7 @@ const DeclarationList: React.FC = () => {
                     }}
                     columns={columns}
                     dataSource={filteredData}
-                    rowKey="id"
+                    rowKey="key"
                     pagination={{
                         pageSize: 10,
                         showTotal: (total) => `Toplam ${total} kayıt`,

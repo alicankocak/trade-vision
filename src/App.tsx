@@ -12,6 +12,7 @@ import Login from './pages/Login';
 import NotFound from './pages/NotFound';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
+import { DashboardProvider } from './context/DashboardContext';
 
 // Placeholder Pages
 const Archive = () => <div><h2>Arşiv</h2></div>;
@@ -44,7 +45,7 @@ const AppContent: React.FC = () => {
 
   const componentTokens = isDarkMode ? {
     Menu: {
-      itemSelectedBg: '#303030', // Clearly dark gray (was #1f1f1f which is also dark but maybe looked light?)
+      itemSelectedBg: '#262626', // Clearly dark gray (was #303030)
       itemSelectedColor: '#ffffff', // Selected text
       itemBg: '#000000', // Menu container bg (Match sidebar)
       itemColor: '#a3a3a3', // Inactive text
@@ -133,11 +134,17 @@ const AppContent: React.FC = () => {
   );
 };
 
+import ErrorBoundary from './components/ErrorBoundary';
+
 const App: React.FC = () => {
   return (
-    <ThemeProvider>
-      <AppContent />
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <DashboardProvider>
+          <AppContent />
+        </DashboardProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 };
 
