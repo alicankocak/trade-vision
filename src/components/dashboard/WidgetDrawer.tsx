@@ -12,15 +12,15 @@ const Icons = {
 };
 
 const WidgetDrawer: React.FC = () => {
-    const { drawerVisible, setDrawerVisible, availableWidgets, addWidget, currentDashboard } = useDashboard();
+    const { drawerVisible, setDrawerVisible, availableWidgets, addWidget, currentDashboard, activeSegment } = useDashboard();
     const { isDarkMode } = useTheme();
 
     if (!drawerVisible) return null;
 
     // Determine if widget is already on dashboard
     const isAdded = (id: string) => {
-        if (!currentDashboard || !currentDashboard.widgets) return false;
-        return currentDashboard.widgets.includes(id);
+        if (!currentDashboard || !currentDashboard.widgets || !currentDashboard.widgets[activeSegment]) return false;
+        return currentDashboard.widgets[activeSegment].includes(id);
     };
 
     // Group widgets by category

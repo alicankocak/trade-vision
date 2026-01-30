@@ -694,7 +694,8 @@ const DeclarationList: React.FC = () => {
                         className: 'px-4',
                         itemRender: (page, type, originalElement) => {
                             if (type === 'prev' || type === 'next') {
-                                return React.cloneElement(originalElement as React.ReactElement, {
+                                const element = originalElement as React.ReactElement<{ style?: React.CSSProperties }>;
+                                return React.cloneElement(element, {
                                     style: { color: isDarkMode ? 'white' : 'black' }
                                 });
                             }
