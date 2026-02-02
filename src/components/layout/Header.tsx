@@ -117,9 +117,11 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle }) => {
 
                     {/* Profile Avatar */}
                     <Dropdown menu={{ items: userMenu }} placement="bottomRight" arrow>
-                        <div className="ml-2 cursor-pointer">
-                            <Avatar src="https://i.pravatar.cc/150?u=a042581f4e29026024d" icon={<UserOutlined />} className="border border-gray-200" />
-                        </div>
+                        <Button
+                            type="text"
+                            icon={<UserOutlined />}
+                            className={isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-black'}
+                        />
                     </Dropdown>
                 </div>
             </AntHeader>
