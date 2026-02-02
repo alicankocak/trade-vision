@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useState } from 'react'
-import { Layout, Menu, theme } from 'antd'
+import { Layout, Menu, ConfigProvider } from 'antd'
+import type { MenuProps } from 'antd'
 import {
-  AppstoreOutlined,
   FileTextOutlined,
   TeamOutlined,
+  AppstoreOutlined,
 } from '@ant-design/icons'
 import { usePathname, useRouter } from 'next/navigation'
 import Header from '@/components/layout/Header'
@@ -20,72 +21,82 @@ interface MainLayoutProps {
 
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false)
-  const {
-    token: { colorBgContainer, borderRadiusLG },
-  } = theme.useToken()
-  const { isAdmin } = useAuth() // Added isAdmin
   const { isDarkMode } = useTheme()
+  const isAdmin = true; // Hardcoded for view
   const router = useRouter()
   const pathname = usePathname()
 
-  const menuItems = [
+  // If login page, don't show layout
+  if (pathname === '/login' || pathname.startsWith('/auth')) {
+    return <>{children}</>;
+  }
+
+  // Sider Width
+  const siderWidth = 260;
+
+  // Menu Items
+  const menuItems: MenuProps['items'] = [
     {
       key: '/dashboard',
-      icon: <AppstoreOutlined />, // Changed icon
       label: 'Dashboard',
+      icon: <AppstoreOutlined />,
     },
     {
       key: '/declarations',
-      icon: <FileTextOutlined />,
       label: 'Beyanname Listesi',
+      icon: <FileTextOutlined />,
     },
-    // Only show Users if Admin
     ...(isAdmin
       ? [
         {
           key: '/users',
           icon: <TeamOutlined />,
-          label: 'Kullanıcı Listesi',
+          label: 'Kullanıcılar',
         },
       ]
       : []),
   ]
 
   return (
-    <Layout className="min-h-screen">
+    <Layout style={{ minHeight: '100vh' }}>
       <Sider
         trigger={null}
         collapsible
         collapsed={collapsed}
+        width={siderWidth}
         theme={isDarkMode ? 'dark' : 'light'}
-        className={
-          isDarkMode ? 'border-r border-[#303030]' : 'border-r border-gray-100'
-        }
-        width={250}
         style={{
-          overflow: 'auto',
+          overflow: 'hidden', // Prevent outer scroll, we handle inner
           height: '100vh',
-          position: 'fixed', // Changed to fixed to ensure it stays on side
+          position: 'fixed',
           left: 0,
           top: 0,
           bottom: 0,
-          zIndex: 100, // Ensure above other elements if needed
-          backgroundColor: isDarkMode ? '#000000' : '#ffffff', // Explicit background
+          zIndex: 1001, // High z-index to stay above
+          backgroundColor: isDarkMode ? '#141414' : '#ffffff',
+          display: 'flex',
+          flexDirection: 'column',
+          borderRight: isDarkMode ? 'none' : '1px solid #E3E3E7',
         }}
       >
-        {/* Logo Section */}
-        <div
-          className={`h-16 flex items-center justify-center border-b ${isDarkMode ? 'border-[#303030]' : 'border-gray-100'}`}
-        >
-          <div className="flex items-center gap-2 overflow-hidden px-4">
+        {/* Fixed Logo Section */}
+        <div style={{
+          height: 64,
+          display: 'flex',
+          alignItems: 'center',
+          paddingLeft: 24,
+          paddingRight: 24,
+          flexShrink: 0 // Prevents shrinking
+        }}>
+          <div className="flex items-center gap-3 overflow-hidden">
             <div
-              className={`min-w-8 w-8 h-8 rounded flex items-center justify-center font-bold flex-shrink-0 ${isDarkMode ? 'bg-white text-black' : 'bg-black text-white'}`}
+              className={`min-w-8 w-8 h-8 rounded-lg flex items-center justify-center font-bold flex-shrink-0 bg-black text-white`}
             >
-              TV
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" /></svg>
             </div>
             {!collapsed && (
               <span
-                className={`text-xl font-bold tracking-tight whitespace-nowrap transition-opacity duration-200 ${isDarkMode ? 'text-white' : 'text-black'}`}
+                className={`text-base font-bold tracking-tight whitespace-nowrap ${isDarkMode ? 'text-white' : 'text-black'}`}
               >
                 TradeVision
               </span>
@@ -93,32 +104,49 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           </div>
         </div>
 
-        <Menu
-          theme={isDarkMode ? 'dark' : 'light'}
-          mode="inline"
-          defaultSelectedKeys={[pathname]}
-          items={menuItems}
-          className="h-full border-r-0"
-          style={{ paddingTop: '1rem', background: 'transparent' }} // Let Sider bg control it
-          onClick={({ key }) => router.push(key)}
-        />
+        {/* Scrollable Menu Section */}
+        <div style={{
+          flex: 1,
+          overflowY: 'auto',
+          overflowX: 'hidden'
+        }} className="custom-scrollbar">
+          <ConfigProvider
+            theme={{
+              components: {
+                Menu: {
+                  itemBorderRadius: 8, // Standard small radius
+                  itemSelectedBg: isDarkMode ? '#1f1f1f' : '#f3f4f6',
+                  itemSelectedColor: isDarkMode ? '#ffffff' : '#111827',
+                  itemColor: isDarkMode ? '#a1a1a1' : '#4b5563',
+                  itemHoverBg: isDarkMode ? '#2a2a2a' : '#f9fafb',
+                  itemMarginInline: 16,
+                  itemHeight: 40,
+                }
+              }
+            }}
+          >
+            <Menu
+              theme={isDarkMode ? 'dark' : 'light'}
+              mode="inline"
+              defaultSelectedKeys={[pathname]}
+              items={menuItems}
+              style={{ borderRight: 0, background: 'transparent' }} // Standard: no border
+              onClick={({ key }) => router.push(key)}
+            />
+          </ConfigProvider>
+        </div>
       </Sider>
 
-      <Layout
-        style={{ marginLeft: collapsed ? 80 : 250, transition: 'all 0.2s' }}
-      >
+      <Layout style={{ marginLeft: collapsed ? 80 : siderWidth, transition: 'all 0.2s', background: isDarkMode ? '#000' : '#fcfcfc' }}>
         <Header
           collapsed={collapsed}
           onToggle={() => setCollapsed(!collapsed)}
         />
         <Content
           style={{
-            margin: '24px 16px',
-            padding: 24,
-            minHeight: 280,
-            background: colorBgContainer,
-            borderRadius: borderRadiusLG,
-            overflow: 'initial',
+            margin: 0,
+            padding: 0,
+            overflow: 'initial', // Let page scroll
           }}
         >
           {children}

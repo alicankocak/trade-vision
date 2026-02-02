@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Table, Input, Button, Tag, Dropdown, Space, Typography, Empty, Tooltip, Checkbox, Popover, Drawer, Divider, Spin, notification } from 'antd';
+import { Segmented, Typography, Table, Input, Button, Tag, Dropdown, Space, Empty, Tooltip, Checkbox, Popover, Drawer, Divider, Spin, notification } from 'antd';
 import {
     SearchOutlined,
     MoreOutlined,
@@ -15,7 +15,7 @@ import {
     FileTextOutlined,
     ClockCircleOutlined
 } from '@ant-design/icons';
-import { useTheme } from '@/context/ThemeContext'; // Import context
+import { useTheme } from '@/context/ThemeContext';
 import type { ColumnsType } from 'antd/es/table';
 import { declarationsList, riskDetails } from '@/utils/mockData';
 import type { Declaration } from '@/utils/mockData';
@@ -404,301 +404,296 @@ const DeclarationList: React.FC = () => {
     };
 
     const searchBg = isDarkMode ? '#141414' : '#fff';
-    const searchBorder = isDarkMode ? '#303030' : '#e2e2e4';
+    const searchBorder = isDarkMode ? '#303030' : '#E3E3E7'; // Updated border color
 
     return (
-        <div className="flex flex-col gap-6 p-1">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <Title level={2} style={{ margin: 0, color: isDarkMode ? 'white' : 'black' }}>
-                        Beyanname Listesi
-                    </Title>
-                    <span className={isDarkMode ? 'text-gray-400' : 'text-gray-500'}>Tüm ithalat ve ihracat beyannamelerinizi buradan yönetin.</span>
-                </div>
-            </div>
-
-            <div className="flex items-center">
-                <div className={`p-1 rounded-lg inline-flex ${isDarkMode ? 'bg-gray-800' : 'bg-gray-200/50'}`}>
-                    <button
-                        onClick={() => setActiveSegment('B2B')}
-                        className={`px-6 py-1.5 rounded-lg text-sm font-bold transition-all duration-200 ${activeSegment === 'B2B'
-                            ? (isDarkMode ? 'bg-[#303030] text-white shadow-sm' : 'bg-white text-gray-900 shadow-sm')
-                            : 'text-gray-500 hover:text-gray-700'
-                            }`}
-                    >
-                        B2B
-                    </button>
-                    <button
-                        onClick={() => setActiveSegment('B2C')}
-                        className={`px-6 py-1.5 rounded-lg text-sm font-bold transition-all duration-200 ${activeSegment === 'B2C'
-                            ? (isDarkMode ? 'bg-[#303030] text-white shadow-sm' : 'bg-white text-gray-900 shadow-sm')
-                            : 'text-gray-500 hover:text-gray-700'
-                            }`}
-                    >
-                        B2C
-                    </button>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                <div className={`p-4 rounded-2xl relative overflow-hidden transition-all duration-300 flex justify-between items-start ${isDarkMode ? 'bg-slate-900 shadow-lg shadow-cyan-900/10' : 'bg-[#0f172a] shadow-sm text-white'}`}>
-                    <div className="flex flex-col justify-between h-full z-10">
-                        <div>
-                            <span className={`text-3xl font-bold block ${isDarkMode ? 'text-cyan-400' : 'text-white'}`}>{totalDeclarations}</span>
-                            <span className={`text-xs font-light tracking-wide mt-1 block opacity-70 ${isDarkMode ? 'text-gray-300' : 'text-gray-300'}`}>Toplam Beyanname</span>
-                        </div>
-                        <div className="mt-4 flex items-center gap-2">
-                            <span className="text-xs font-medium text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded flex items-center gap-1">
-                                +12.5%
-                            </span>
-                            <span className="text-[10px] opacity-60">bu hafta</span>
-                        </div>
-                    </div>
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0 ${isDarkMode ? 'bg-cyan-500/20 text-cyan-400' : 'bg-white/10 text-cyan-200'}`}>
-                        <FileTextOutlined />
+        <div className={`min-h-screen p-6 ${isDarkMode ? 'bg-black' : 'bg-[#fcfcfc]'}`}>
+            <div className="flex flex-col gap-6"> {/* Removed p-1, increased gap */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <Title level={2} style={{ margin: 0, color: isDarkMode ? 'white' : 'black' }}>
+                            Beyanname Listesi
+                        </Title>
+                        <span className={isDarkMode ? 'text-gray-400' : 'text-gray-500'}>Tüm ithalat ve ihracat beyannamelerinizi buradan yönetin.</span>
                     </div>
                 </div>
 
-                <div className={`p-4 rounded-2xl relative overflow-hidden transition-all duration-300 flex justify-between items-start ${isDarkMode ? 'bg-[#2a0f1b] shadow-lg shadow-pink-900/10' : 'bg-white border border-[#e2e2e4] shadow-sm'}`}>
-                    <div className="flex flex-col justify-between h-full z-10">
-                        <div>
-                            <span className={`text-3xl font-bold block ${isDarkMode ? 'text-pink-500' : 'text-gray-900'}`}>{totalAbsoluteRisk}</span>
-                            <span className={`text-xs font-light tracking-wide mt-1 block opacity-70 ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>Mutlak Risk</span>
-                        </div>
-                        <div className="mt-4 flex flex-col gap-1">
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs font-medium text-rose-500 bg-rose-500/10 px-1.5 py-0.5 rounded flex items-center gap-1">
-                                    +2.1%
-                                </span>
-                                <span className={`text-[10px] opacity-60 ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`}>geçen aya göre</span>
-                            </div>
-                            <span className={`text-[10px] font-medium mt-1 ${isDarkMode ? 'text-pink-200/70' : 'text-gray-600'}`}>
-                                Bulgu sayısı: 12
-                            </span>
-                        </div>
-                    </div>
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0 ${isDarkMode ? 'bg-pink-600/20 text-pink-500' : 'bg-rose-50 text-rose-600'}`}>
-                        <WarningOutlined />
-                    </div>
-                </div>
-
-                <div className={`p-4 rounded-2xl relative overflow-hidden transition-all duration-300 flex justify-between items-start ${isDarkMode ? 'bg-[#431407] shadow-lg shadow-orange-900/10' : 'bg-white border border-[#e2e2e4] shadow-sm'}`}>
-                    <div className="flex flex-col justify-between h-full z-10">
-                        <div>
-                            <span className={`text-3xl font-bold block ${isDarkMode ? 'text-orange-500' : 'text-gray-900'}`}>{totalPotentialRisk}</span>
-                            <span className={`text-xs font-light tracking-wide mt-1 block opacity-70 ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>Potansiyel Risk</span>
-                        </div>
-                        <div className="mt-4 flex flex-col gap-1">
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs font-medium text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded flex items-center gap-1">
-                                    -5.4%
-                                </span>
-                                <span className={`text-[10px] opacity-60 ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`}>bu hafta</span>
-                            </div>
-                            <span className={`text-[10px] font-medium mt-1 ${isDarkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
-                                Bulgu sayısı: 45
-                            </span>
-                        </div>
-                    </div>
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0 ${isDarkMode ? 'bg-orange-600/20 text-orange-500' : 'bg-orange-50 text-orange-600'}`}>
-                        <InfoCircleOutlined />
-                    </div>
-                </div>
-
-                <div className={`p-4 rounded-2xl relative overflow-hidden transition-all duration-300 flex justify-between items-start ${isDarkMode ? 'bg-[#3b0764] shadow-lg shadow-purple-900/10' : 'bg-white border border-[#e2e2e4] shadow-sm'}`}>
-                    <div className="flex flex-col justify-between h-full z-10">
-                        <div>
-                            <span className={`text-3xl font-bold block ${isDarkMode ? 'text-purple-400' : 'text-gray-900'}`}>{totalMLRisk}</span>
-                            <span className={`text-xs font-light tracking-wide mt-1 block opacity-70 ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>AI & ML Bulgusu</span>
-                        </div>
-                        <div className="mt-4 flex flex-col gap-1">
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs font-medium text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded flex items-center gap-1">
-                                    +18.2%
-                                </span>
-                                <span className={`text-[10px] opacity-60 ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`}>yeni model ile</span>
-                            </div>
-                            <span className={`text-[10px] font-medium mt-1 ${isDarkMode ? 'text-purple-200/70' : 'text-gray-600'}`}>
-                                Bulgu sayısı: 8
-                            </span>
-                        </div>
-                    </div>
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0 ${isDarkMode ? 'bg-purple-600/20 text-purple-400' : 'bg-purple-50 text-purple-600'}`}>
-                        <CheckCircleOutlined />
-                    </div>
-                </div>
-
-                <div className={`p-4 rounded-2xl relative overflow-hidden transition-all duration-300 flex justify-between items-start ${isDarkMode ? 'bg-[#052e16] shadow-lg shadow-emerald-900/10' : 'bg-white border border-[#e2e2e4] shadow-sm'}`}>
-                    <div className="flex flex-col justify-between h-full z-10">
-                        <div>
-                            <span className={`text-3xl font-bold block ${isDarkMode ? 'text-emerald-400' : 'text-gray-900'}`}>{totalPendingIntac}</span>
-                            <span className={`text-xs font-light tracking-wide mt-1 block opacity-70 ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>İntaç Bekleyen</span>
-                        </div>
-                        <div className="mt-4 flex items-center gap-2">
-                            <span className="text-xs font-medium text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded flex items-center gap-1">
-                                ~1.2%
-                            </span>
-                            <span className={`text-[10px] opacity-60 ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`}>sabit seyir</span>
-                        </div>
-                    </div>
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0 ${isDarkMode ? 'bg-emerald-500/20 text-emerald-400' : 'bg-green-50 text-green-600'}`}>
-                        <ClockCircleOutlined />
-                    </div>
-                </div>
-            </div>
-
-            <div className="p-4 rounded-lg border mb-4 shadow-sm flex flex-col md:flex-row gap-4 justify-between items-center transition-colors duration-200"
-                style={{ backgroundColor: searchBg, borderColor: searchBorder }}
-            >
-                <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto items-center">
-                    <Input
-                        placeholder="Beyanname No, Firma veya Tutar Ara..."
-                        prefix={<SearchOutlined className={isDarkMode ? 'text-gray-400' : 'text-gray-400'} />}
-                        className="w-[280px]"
-                        value={searchText}
-                        onChange={handleSearch}
-                        allowClear
-                        style={{ backgroundColor: isDarkMode ? '#1f1f1f' : '#fff', borderColor: isDarkMode ? '#303030' : '#d9d9d9', color: isDarkMode ? '#fff' : '#000' }}
+                <div className="flex items-center">
+                    <Segmented
+                        options={[
+                            { label: 'B2B', value: 'B2B' },
+                            { label: 'B2C', value: 'B2C' }
+                        ]}
+                        value={activeSegment}
+                        onChange={(val) => setActiveSegment(val as 'B2B' | 'B2C')}
                     />
                 </div>
 
-                <div className="flex gap-2 items-center">
-                    <Button
-                        icon={<ExportOutlined />}
-                        style={{ backgroundColor: isDarkMode ? '#9f9fa7' : 'transparent', color: isDarkMode ? '#ffffff' : 'inherit', border: isDarkMode ? 'none' : '' }}
-                    >
-                        Dışa Aktar
-                    </Button>
-
-                    <Popover
-                        content={filterMenuContent}
-                        trigger="click"
-                        open={openFilter}
-                        onOpenChange={setOpenFilter}
-                        placement="bottomRight"
-                        arrow={false}
-                        overlayClassName={isDarkMode ? 'dark-popover' : ''}
-                    >
-                        <Button
-                            icon={<FilterOutlined />}
-                            style={{
-                                backgroundColor: isDarkMode ? '#3f3f46' : (hasActiveFilters ? '#f3f4f6' : '#000000'),
-                                color: isDarkMode ? '#ffffff' : (hasActiveFilters ? '#000000' : '#ffffff'),
-                                borderColor: isDarkMode ? '#3f3f46' : (hasActiveFilters ? '#d1d5db' : '#000000')
-                            }}
-                            className="transition-colors"
-                        >
-                            Gelişmiş Filtre {filterCount > 0 && `(${filterCount})`}
-                        </Button>
-                    </Popover>
-
-                    {selectedRowKeys.length > 0 && (
-                        <Button
-                            icon={<CheckCircleOutlined />}
-                            onClick={handleStatusCheck}
-                            disabled={isChecking}
-                            style={{
-                                backgroundColor: isDarkMode ? '#3f3f46' : '#f4f4f5',
-                                color: isDarkMode ? '#ffffff' : '#000000',
-                                borderColor: isDarkMode ? '#3f3f46' : '#d4d4d8'
-                            }}
-                        >
-                            Statü Kontrol Et
-                        </Button>
-                    )}
-                </div>
-            </div>
-
-            {isChecking && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center flex-col gap-4">
-                    <Spin size="large" />
-                    <span className="text-white font-medium text-lg">Kontrol ediliyor...</span>
-                </div>
-            )}
-
-            <div className="rounded-lg border shadow-sm overflow-hidden transition-colors duration-200"
-                style={{ backgroundColor: searchBg, borderColor: searchBorder }}
-            >
-                <Table
-                    rowSelection={{
-                        type: 'checkbox',
-                        ...rowSelection,
-                    }}
-                    columns={columns}
-                    dataSource={filteredData}
-                    rowKey="key"
-                    pagination={{
-                        pageSize: 10,
-                        showTotal: (total) => `Toplam ${total} kayıt`,
-                        className: 'px-4',
-                        itemRender: (page, type, originalElement) => {
-                            if (type === 'prev' || type === 'next') {
-                                const element = originalElement as React.ReactElement<{ style?: React.CSSProperties }>;
-                                return React.cloneElement(element, {
-                                    style: { color: isDarkMode ? 'white' : 'black' }
-                                });
-                            }
-                            return originalElement;
-                        }
-                    }}
-                    expandable={{
-                        expandedRowRender,
-                        rowExpandable: (record) => true,
-                    }}
-                    scroll={{ x: 1000 }}
-                    onRow={(record) => ({
-                        className: 'cursor-pointer group',
-                    })}
-                />
-            </div>
-
-            <Drawer
-                title={
-                    <div className="flex items-center gap-2">
-                        <WarningOutlined className="text-red-500" />
-                        <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>Risk Detayı</span>
+                <div className={`grid grid-cols-1 md:grid-cols-5 gap-4`}>
+                    {/* Card 1: Toplam Beyanname */}
+                    <div className={`p-4 rounded-[16px] border shadow-sm relative overflow-hidden transition-all duration-300 flex justify-between items-start ${isDarkMode ? 'bg-[#1f1f1f] border-[#303030]' : 'bg-white border-[#E3E3E7]'}`}>
+                        <div className="flex flex-col justify-between h-full z-10">
+                            <div>
+                                <span className={`text-[30px] font-bold block ${isDarkMode ? 'text-white' : 'text-[#333335]'}`}>{totalDeclarations}</span>
+                                <span className={`text-[14px] font-normal tracking-wide mt-1 block opacity-70 ${isDarkMode ? 'text-gray-400' : 'text-[#333335]'}`}>Toplam Beyanname</span>
+                            </div>
+                            <div className="mt-4 flex items-center gap-2">
+                                <span className="text-[14px] font-medium text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                    +12.5%
+                                </span>
+                                <span className={`text-[14px] opacity-60 ${isDarkMode ? 'text-gray-400' : 'text-[#333335]'}`}>bu hafta</span>
+                            </div>
+                        </div>
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0 ${isDarkMode ? 'bg-cyan-500/20 text-cyan-400' : 'bg-gray-100 text-[#333335]'}`}>
+                            <FileTextOutlined />
+                        </div>
                     </div>
-                }
-                placement="right"
-                onClose={() => setDrawerVisible(false)}
-                open={drawerVisible}
-                width={500}
-                headerStyle={{ backgroundColor: isDarkMode ? '#141414' : '#fff', borderBottom: isDarkMode ? '1px solid #303030' : '1px solid #f0f0f0' }}
-                bodyStyle={{ backgroundColor: isDarkMode ? '#141414' : '#fff' }}
-            >
-                {selectedRiskDetail ? (
-                    <div className="flex flex-col gap-6">
-                        <div className={`p-4 rounded border ${isDarkMode ? 'bg-[#450a0a] border-[#7f1d1d]' : 'bg-red-50 border-red-100'}`}>
-                            <h3 className={`text-lg font-bold m-0 ${isDarkMode ? 'text-red-300' : 'text-red-700'}`}>{selectedRiskDetail.code}</h3>
-                            <span className={isDarkMode ? 'text-red-400' : 'text-red-500'}>{selectedRiskDetail.subject}</span>
+
+                    {/* Card 2: Mutlak Risk */}
+                    <div className={`p-4 rounded-[16px] border shadow-sm relative overflow-hidden transition-all duration-300 flex justify-between items-start ${isDarkMode ? 'bg-[#1f1f1f] border-[#303030]' : 'bg-white border-[#E3E3E7]'}`}>
+                        <div className="flex flex-col justify-between h-full z-10">
+                            <div>
+                                <span className={`text-[30px] font-bold block ${isDarkMode ? 'text-white' : 'text-[#333335]'}`}>{totalAbsoluteRisk}</span>
+                                <span className={`text-[14px] font-normal tracking-wide mt-1 block opacity-70 ${isDarkMode ? 'text-gray-400' : 'text-[#333335]'}`}>Mutlak Risk</span>
+                            </div>
+                            <div className="mt-4 flex flex-col gap-1">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[14px] font-medium text-rose-500 bg-rose-500/10 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                        +2.1%
+                                    </span>
+                                    <span className={`text-[14px] opacity-60 ${isDarkMode ? 'text-gray-400' : 'text-[#333335]'}`}>geçen aya göre</span>
+                                </div>
+                                <span className={`text-[14px] font-medium mt-1 ${isDarkMode ? 'text-gray-400' : 'text-[#333335]'}`}>
+                                    Bulgu sayısı: 12
+                                </span>
+                            </div>
                         </div>
-
-                        <Divider className={`my-0 ${isDarkMode ? 'border-[#303030]' : ''}`} />
-
-                        <div>
-                            <h4 className={`font-semibold mb-2 flex items-center gap-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                                <InfoCircleOutlined /> Detay Açıklama
-                            </h4>
-                            <p className={`leading-relaxed p-3 rounded ${isDarkMode ? 'bg-[#1f1f1f] text-gray-400' : 'bg-gray-50 text-gray-600'}`}>
-                                {selectedRiskDetail.details}
-                            </p>
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0 ${isDarkMode ? 'bg-pink-600/20 text-pink-500' : 'bg-rose-50 text-rose-600'}`}>
+                            <WarningOutlined />
                         </div>
+                    </div>
 
-                        <div>
-                            <h4 className={`font-semibold mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>İlgili Kalem</h4>
-                            <Tag color="blue" className="text-sm py-1 px-3">
-                                {selectedRiskDetail.relatedItem}
-                            </Tag>
+                    {/* Card 3: Potansiyel Risk */}
+                    <div className={`p-4 rounded-[16px] border shadow-sm relative overflow-hidden transition-all duration-300 flex justify-between items-start ${isDarkMode ? 'bg-[#1f1f1f] border-[#303030]' : 'bg-white border-[#E3E3E7]'}`}>
+                        <div className="flex flex-col justify-between h-full z-10">
+                            <div>
+                                <span className={`text-[30px] font-bold block ${isDarkMode ? 'text-white' : 'text-[#333335]'}`}>{totalPotentialRisk}</span>
+                                <span className={`text-[14px] font-normal tracking-wide mt-1 block opacity-70 ${isDarkMode ? 'text-gray-400' : 'text-[#333335]'}`}>Potansiyel Risk</span>
+                            </div>
+                            <div className="mt-4 flex flex-col gap-1">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[14px] font-medium text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                        -5.4%
+                                    </span>
+                                    <span className={`text-[14px] opacity-60 ${isDarkMode ? 'text-gray-400' : 'text-[#333335]'}`}>bu hafta</span>
+                                </div>
+                                <span className={`text-[14px] font-medium mt-1 ${isDarkMode ? 'text-gray-400' : 'text-[#333335]'}`}>
+                                    Bulgu sayısı: 45
+                                </span>
+                            </div>
                         </div>
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0 ${isDarkMode ? 'bg-orange-600/20 text-orange-500' : 'bg-orange-50 text-orange-600'}`}>
+                            <InfoCircleOutlined />
+                        </div>
+                    </div>
 
-                        <div className="mt-auto pt-8">
-                            <Button type="primary" className={`w-full h-10 ${isDarkMode ? 'bg-white text-black' : 'bg-black'}`} onClick={() => setDrawerVisible(false)}>
-                                Anlaşıldı, Kapat
+                    {/* Card 4: AI & ML Bulgusu */}
+                    <div className={`p-4 rounded-[16px] border shadow-sm relative overflow-hidden transition-all duration-300 flex justify-between items-start ${isDarkMode ? 'bg-[#1f1f1f] border-[#303030]' : 'bg-white border-[#E3E3E7]'}`}>
+                        <div className="flex flex-col justify-between h-full z-10">
+                            <div>
+                                <span className={`text-[30px] font-bold block ${isDarkMode ? 'text-white' : 'text-[#333335]'}`}>{totalMLRisk}</span>
+                                <span className={`text-[14px] font-normal tracking-wide mt-1 block opacity-70 ${isDarkMode ? 'text-gray-400' : 'text-[#333335]'}`}>AI & ML Bulgusu</span>
+                            </div>
+                            <div className="mt-4 flex flex-col gap-1">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[14px] font-medium text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                        +18.2%
+                                    </span>
+                                    <span className={`text-[14px] opacity-60 ${isDarkMode ? 'text-gray-400' : 'text-[#333335]'}`}>yeni model ile</span>
+                                </div>
+                                <span className={`text-[14px] font-medium mt-1 ${isDarkMode ? 'text-gray-400' : 'text-[#333335]'}`}>
+                                    Bulgu sayısı: 8
+                                </span>
+                            </div>
+                        </div>
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0 ${isDarkMode ? 'bg-purple-600/20 text-purple-400' : 'bg-purple-50 text-purple-600'}`}>
+                            <CheckCircleOutlined />
+                        </div>
+                    </div>
+
+                    {/* Card 5: İntaç Bekleyen */}
+                    <div className={`p-4 rounded-[16px] border shadow-sm relative overflow-hidden transition-all duration-300 flex justify-between items-start ${isDarkMode ? 'bg-[#1f1f1f] border-[#303030]' : 'bg-white border-[#E3E3E7]'}`}>
+                        <div className="flex flex-col justify-between h-full z-10">
+                            <div>
+                                <span className={`text-[30px] font-bold block ${isDarkMode ? 'text-white' : 'text-[#333335]'}`}>{totalPendingIntac}</span>
+                                <span className={`text-[14px] font-normal tracking-wide mt-1 block opacity-70 ${isDarkMode ? 'text-gray-400' : 'text-[#333335]'}`}>İntaç Bekleyen</span>
+                            </div>
+                            <div className="mt-4 flex items-center gap-2">
+                                <span className="text-[14px] font-medium text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                    ~1.2%
+                                </span>
+                                <span className={`text-[14px] opacity-60 ${isDarkMode ? 'text-gray-400' : 'text-[#333335]'}`}>sabit seyir</span>
+                            </div>
+                        </div>
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0 ${isDarkMode ? 'bg-emerald-500/20 text-emerald-400' : 'bg-green-50 text-green-600'}`}>
+                            <ClockCircleOutlined />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="p-4 rounded-lg border mb-4 shadow-sm flex flex-col md:flex-row gap-4 justify-between items-center transition-colors duration-200"
+                    style={{ backgroundColor: searchBg, borderColor: searchBorder }}
+                >
+                    <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto items-center">
+                        <Input
+                            placeholder="Beyanname No, Firma veya Tutar Ara..."
+                            prefix={<SearchOutlined className={isDarkMode ? 'text-gray-400' : 'text-gray-400'} />}
+                            className="w-[280px]"
+                            value={searchText}
+                            onChange={handleSearch}
+                            allowClear
+                            style={{ backgroundColor: isDarkMode ? '#1f1f1f' : '#fff', borderColor: isDarkMode ? '#303030' : '#d9d9d9', color: isDarkMode ? '#fff' : '#000' }}
+                        />
+                    </div>
+
+                    <div className="flex gap-2 items-center">
+                        <Button
+                            icon={<ExportOutlined />}
+                            style={{ backgroundColor: isDarkMode ? '#9f9fa7' : 'transparent', color: isDarkMode ? '#ffffff' : 'inherit', border: isDarkMode ? 'none' : '' }}
+                        >
+                            Dışa Aktar
+                        </Button>
+
+                        <Popover
+                            content={filterMenuContent}
+                            trigger="click"
+                            open={openFilter}
+                            onOpenChange={setOpenFilter}
+                            placement="bottomRight"
+                            arrow={false}
+                            overlayClassName={isDarkMode ? 'dark-popover' : ''}
+                        >
+                            <Button
+                                icon={<FilterOutlined />}
+                                style={{
+                                    backgroundColor: isDarkMode ? '#3f3f46' : (hasActiveFilters ? '#f3f4f6' : '#000000'),
+                                    color: isDarkMode ? '#ffffff' : (hasActiveFilters ? '#000000' : '#ffffff'),
+                                    borderColor: isDarkMode ? '#3f3f46' : (hasActiveFilters ? '#d1d5db' : '#000000')
+                                }}
+                                className="transition-colors"
+                            >
+                                Gelişmiş Filtre {filterCount > 0 && `(${filterCount})`}
                             </Button>
-                        </div>
+                        </Popover>
+
+                        {selectedRowKeys.length > 0 && (
+                            <Button
+                                icon={<CheckCircleOutlined />}
+                                onClick={handleStatusCheck}
+                                disabled={isChecking}
+                                style={{
+                                    backgroundColor: isDarkMode ? '#3f3f46' : '#f4f4f5',
+                                    color: isDarkMode ? '#ffffff' : '#000000',
+                                    borderColor: isDarkMode ? '#3f3f46' : '#d4d4d8'
+                                }}
+                            >
+                                Statü Kontrol Et
+                            </Button>
+                        )}
                     </div>
-                ) : <Empty description="Risk detayı bulunamadı" />}
-            </Drawer>
+                </div>
+
+                {isChecking && (
+                    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center flex-col gap-4">
+                        <Spin size="large" />
+                        <span className="text-white font-medium text-lg">Kontrol ediliyor...</span>
+                    </div>
+                )}
+
+                <div className={`rounded-[16px] border shadow-sm overflow-hidden transition-colors duration-200 ${isDarkMode ? 'border-[#303030]' : 'border-[#a1a1a1]'}`}
+                    style={{ backgroundColor: searchBg }}
+                >
+                    <Table
+                        rowSelection={{
+                            type: 'checkbox',
+                            ...rowSelection,
+                        }}
+                        columns={columns}
+                        dataSource={filteredData}
+                        rowKey="key"
+                        pagination={{
+                            pageSize: 10,
+                            showTotal: (total) => `Toplam ${total} kayıt`,
+                            className: 'px-4',
+                            itemRender: (page, type, originalElement) => {
+                                if (type === 'prev' || type === 'next') {
+                                    const element = originalElement as React.ReactElement<{ style?: React.CSSProperties }>;
+                                    return React.cloneElement(element, {
+                                        style: { color: isDarkMode ? 'white' : 'black' }
+                                    });
+                                }
+                                return originalElement;
+                            }
+                        }}
+                        expandable={{
+                            expandedRowRender,
+                            rowExpandable: (record) => true,
+                        }}
+                        scroll={{ x: 1000 }}
+                        onRow={(record) => ({
+                            className: 'cursor-pointer group',
+                        })}
+                    />
+                </div>
+
+                <Drawer
+                    title={
+                        <div className="flex items-center gap-2">
+                            <WarningOutlined className="text-red-500" />
+                            <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>Risk Detayı</span>
+                        </div>
+                    }
+                    placement="right"
+                    onClose={() => setDrawerVisible(false)}
+                    open={drawerVisible}
+                    width={500}
+                    headerStyle={{ backgroundColor: isDarkMode ? '#141414' : '#fff', borderBottom: isDarkMode ? '1px solid #303030' : '1px solid #f0f0f0' }}
+                    bodyStyle={{ backgroundColor: isDarkMode ? '#141414' : '#fff' }}
+                >
+                    {selectedRiskDetail ? (
+                        <div className="flex flex-col gap-6">
+                            <div className={`p-4 rounded border ${isDarkMode ? 'bg-[#450a0a] border-[#7f1d1d]' : 'bg-red-50 border-red-100'}`}>
+                                <h3 className={`text-lg font-bold m-0 ${isDarkMode ? 'text-red-300' : 'text-red-700'}`}>{selectedRiskDetail.code}</h3>
+                                <span className={isDarkMode ? 'text-red-400' : 'text-red-500'}>{selectedRiskDetail.subject}</span>
+                            </div>
+
+                            <Divider className={`my-0 ${isDarkMode ? 'border-[#303030]' : ''}`} />
+
+                            <div>
+                                <h4 className={`font-semibold mb-2 flex items-center gap-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                    <InfoCircleOutlined /> Detay Açıklama
+                                </h4>
+                                <p className={`leading-relaxed p-3 rounded ${isDarkMode ? 'bg-[#1f1f1f] text-gray-400' : 'bg-gray-50 text-gray-600'}`}>
+                                    {selectedRiskDetail.details}
+                                </p>
+                            </div>
+
+                            <div>
+                                <h4 className={`font-semibold mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>İlgili Kalem</h4>
+                                <Tag color="blue" className="text-sm py-1 px-3">
+                                    {selectedRiskDetail.relatedItem}
+                                </Tag>
+                            </div>
+
+                            <div className="mt-auto pt-8">
+                                <Button type="primary" className={`w-full h-10 ${isDarkMode ? 'bg-white text-black' : 'bg-black'}`} onClick={() => setDrawerVisible(false)}>
+                                    Anlaşıldı, Kapat
+                                </Button>
+                            </div>
+                        </div>
+                    ) : <Empty description="Risk detayı bulunamadı" />}
+                </Drawer>
+            </div>
         </div>
     );
 };

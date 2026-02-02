@@ -6,14 +6,13 @@ import {
     MenuFoldOutlined,
     BellOutlined,
     UserOutlined,
-    SettingOutlined,
     LogoutOutlined,
     SunOutlined,
-    MoonOutlined
+    MoonOutlined,
 } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext'; // Import context
+import { useTheme } from '../../context/ThemeContext';
 import NotificationDrawer from '../notifications/NotificationDrawer';
 
 const { Header: AntHeader } = Layout;
@@ -25,9 +24,9 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ collapsed, onToggle }) => {
     const [drawerOpen, setDrawerOpen] = React.useState(false);
-    const { isDarkMode, toggleTheme } = useTheme(); // Use context
+    const { isDarkMode, toggleTheme } = useTheme();
     const router = useRouter();
-    const { user, logout, login } = useAuth(); // Exposed login for debugging if needed
+    const { user, logout, login } = useAuth();
 
     // Profile Dropdown Menu
     const userMenu: MenuProps['items'] = [
@@ -41,37 +40,15 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle }) => {
             ),
             disabled: true,
         },
-        {
-            type: 'divider',
-        },
+        { type: 'divider' },
         {
             key: '1',
             icon: <UserOutlined />,
             label: 'Profilim',
             onClick: () => router.push('/profile'),
         },
-        {
-            key: '2',
-            icon: <SettingOutlined />,
-            label: 'Ayarlar',
-        },
-        // DEBUG: Switch Roles
-        {
-            type: 'divider',
-        },
-        {
-            key: 'role-admin',
-            label: 'Rol: Admin (Test)',
-            onClick: () => login('Admin'),
-        },
-        {
-            key: 'role-user',
-            label: 'Rol: User (Test)',
-            onClick: () => login('User'),
-        },
-        {
-            type: 'divider',
-        },
+        // Removed Settings as implied by cleanup
+        { type: 'divider' },
         {
             key: '3',
             icon: <LogoutOutlined />,
@@ -89,64 +66,64 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle }) => {
         <>
             <AntHeader
                 style={{
-                    padding: '0 24px',
-                    background: isDarkMode ? '#141414' : '#fff', // Header bg dynamic
+                    padding: 0,
+                    background: isDarkMode ? '#141414' : '#fff',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    borderBottom: isDarkMode ? '1px solid #303030' : '1px solid #e2e2e4',
-                    zIndex: 10,
+                    borderBottom: isDarkMode ? '1px solid #303030' : '1px solid #E3E3E7',
+                    zIndex: 1000,
+                    height: '64px',
+                    position: 'sticky',
+                    top: 0,
+                    width: '100%',
                 }}
             >
-                {/* Left Section: Toggle Only */}
-                <div className="flex items-center">
+                {/* Left Section: Toggle Only - Custom Trigger Style */}
+                <div className="flex items-center gap-4 flex-1">
                     <Button
                         type="text"
                         icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
                         onClick={onToggle}
-                        style={{ fontSize: '16px', width: 64, height: 64 }}
-                        className={isDarkMode ? 'text-white hover:text-gray-300' : 'text-black hover:text-gray-600'}
+                        style={{
+                            fontSize: '16px',
+                            width: 64,
+                            height: 64,
+                        }}
+                        className={isDarkMode ? 'text-white hover:bg-[#1f1f1f]' : 'text-gray-500 hover:bg-gray-100'}
                     />
                 </div>
 
-                {/* Right Section: Actions */}
-                <div className="flex items-center gap-4">
+                {/* Right Section: Icons - Added padding-right since Header padding is 0 */}
+                <div className="flex items-center gap-2 pr-6">
+
                     {/* Theme Toggle */}
-                    {/* Theme Toggle Icon (Update 20.0) */}
                     <Button
                         type="text"
                         icon={isDarkMode ? <MoonOutlined /> : <SunOutlined />}
                         onClick={toggleTheme}
-                        style={{ fontSize: '20px', color: isDarkMode ? '#ffffff' : '#000000' }}
-                        className="flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/10 rounded-full w-10 h-10 transition-all"
+                        className={isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-black'}
                     />
 
-                    {/* Notification Bell */}
-                    <Badge count={2} size="small" offset={[-2, 2]}>
+                    {/* Notification */}
+                    <Badge count={2} size="small" dot offset={[-4, 4]}>
                         <Button
                             type="text"
-                            icon={<BellOutlined style={{ fontSize: '20px' }} />}
+                            icon={<BellOutlined />}
                             onClick={() => setDrawerOpen(true)}
-                            className={`flex items-center justify-center ${isDarkMode ? 'text-white hover:text-gray-300' : 'text-black hover:text-gray-600'}`}
+                            className={isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-black'}
                         />
                     </Badge>
 
-                    {/* Profile Dropdown */}
+                    {/* Profile Avatar */}
                     <Dropdown menu={{ items: userMenu }} placement="bottomRight" arrow>
-                        <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 px-2 py-1 rounded transition-colors">
-                            <Avatar icon={<UserOutlined />} className="bg-black" />
-                            <div className="flex flex-col text-right leading-tight hidden md:flex">
-                                <span className="text-sm font-semibold text-gray-800">
-                                    Alican
-                                </span>
-                                <span className="text-xs text-gray-500">Admin</span>
-                            </div>
+                        <div className="ml-2 cursor-pointer">
+                            <Avatar src="https://i.pravatar.cc/150?u=a042581f4e29026024d" icon={<UserOutlined />} className="border border-gray-200" />
                         </div>
                     </Dropdown>
                 </div>
             </AntHeader>
 
-            {/* Notification Drawer */}
             <NotificationDrawer
                 open={drawerOpen}
                 onClose={() => setDrawerOpen(false)}

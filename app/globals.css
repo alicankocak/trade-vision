@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+body {
+    background-color: #525252;
+}
+
 /* Global Button Overrides - High Specificity */
 button.ant-btn.btn-primary-custom {
     background-color: #ffffff !important;

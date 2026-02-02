@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Providers } from './providers';
 import { AntdRegistry } from '@ant-design/nextjs-registry';
+import MainLayout from '@/layout/MainLayout';
 
 export const metadata: Metadata = {
     title: 'TradeVision',
@@ -18,7 +19,9 @@ export default function RootLayout({
             <body>
                 <AntdRegistry>
                     <Providers>
-                        {children}
+                        <MainLayout>
+                            {children}
+                        </MainLayout>
                     </Providers>
                 </AntdRegistry>
             </body>
