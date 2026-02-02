@@ -313,7 +313,7 @@ const Dashboard: React.FC = () => {
                 bodyStyle={{ backgroundColor: isDarkMode ? '#141414' : '#fff' }}
             >
                 <div className="flex flex-col gap-4">
-                    <span className={isDarkMode ? 'text-gray-400' : 'text-gray-500'}>Eklemek istediğiniz kartları seçiniz:</span>
+                    <span className={isDarkMode ? 'text-gray-400' : 'text-gray-500'}>Eklemek BÜTÜN istediğiniz kartları seçiniz:</span>
 
                     {Object.keys(WIDGET_REGISTRY).map(type => {
                         // Check if at least one instance exists
