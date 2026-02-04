@@ -3,6 +3,7 @@ import './globals.css';
 import { Providers } from './providers';
 import { AntdRegistry } from '@ant-design/nextjs-registry';
 import MainLayout from '@/layout/MainLayout';
+import GlobalLoader from '@/components/GlobalLoader';
 
 export const metadata: Metadata = {
     title: 'TradeVision',
@@ -19,6 +20,7 @@ export default function RootLayout({
             <body>
                 <AntdRegistry>
                     <Providers>
+                        <GlobalLoader />
                         <MainLayout>
                             {children}
                         </MainLayout>

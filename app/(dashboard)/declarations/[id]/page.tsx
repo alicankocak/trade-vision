@@ -15,6 +15,7 @@ import {
     Tag,
     Typography,
     message,
+    Timeline,
 } from 'antd'
 import {
     CloudDownloadOutlined,
@@ -120,7 +121,7 @@ const DeclarationDetail: React.FC = () => {
                                 <Space>
                                     <WarningOutlined className="text-orange-500" />{' '}
                                     <span style={{ color: isDarkMode ? 'white' : 'black' }}>
-                                        riskMAN Ön Analiz
+                                        Customs X-ray Ön Analiz
                                     </span>
                                 </Space>
                             }
@@ -277,6 +278,68 @@ const DeclarationDetail: React.FC = () => {
                             </List.Item>
                         )}
                     />
+                </Card>
+            ),
+        },
+
+        {
+            key: '3',
+            label: 'İşlem Geçmişi',
+            children: (
+                <Card className="shadow-sm border border-gray-100" style={cardStyle}>
+                    <div className="p-4">
+                        <Timeline
+                            mode="left"
+                            items={[
+                                {
+                                    color: 'green',
+                                    children: (
+                                        <>
+                                            <div className={`font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Beyanname Oluşturuldu</div>
+                                            <div className="text-xs text-gray-500">26.01.2024 14:30 - Sistem</div>
+                                        </>
+                                    ),
+                                },
+                                {
+                                    color: 'blue',
+                                    children: (
+                                        <>
+                                            <div className={`font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Customs X-ray Ön Analiz Başlatıldı</div>
+                                            <div className="text-xs text-gray-500">26.01.2024 14:35 - Otomasyon</div>
+                                        </>
+                                    ),
+                                },
+                                {
+                                    color: 'orange',
+                                    children: (
+                                        <>
+                                            <div className={`font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Riskler Tespit Edildi</div>
+                                            <div className="text-xs text-gray-500">26.01.2024 14:36 - Customs X-ray AI</div>
+                                            <div className={`mt-1 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Potansiyel GTİP uyumsuzluğu ve menşei riski tespit edildi.</div>
+                                        </>
+                                    ),
+                                },
+                                {
+                                    dot: <CloudDownloadOutlined className="text-blue-500" />,
+                                    children: (
+                                        <>
+                                            <div className={`font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>TPS Başvurusu Yapıldı</div>
+                                            <div className="text-xs text-gray-500">26.01.2024 15:00 - Operasyon Uzmanı</div>
+                                        </>
+                                    ),
+                                },
+                                {
+                                    color: 'gray',
+                                    children: (
+                                        <>
+                                            <div className={`font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>İntaç Bekleniyor</div>
+                                            <div className="text-xs text-gray-500">İşlem devam ediyor...</div>
+                                        </>
+                                    ),
+                                },
+                            ]}
+                        />
+                    </div>
                 </Card>
             ),
         },

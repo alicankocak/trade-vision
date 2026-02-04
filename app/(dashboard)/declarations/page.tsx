@@ -14,9 +14,12 @@ import {
     CheckCircleOutlined,
     FileTextOutlined,
     ClockCircleOutlined,
-    FileSyncOutlined
+    FileSyncOutlined,
+    HistoryOutlined
 } from '@ant-design/icons';
+import { Timeline } from 'antd';
 import { useTheme } from '@/context/ThemeContext';
+import { useDashboard } from '@/context/DashboardContext';
 import type { ColumnsType } from 'antd/es/table';
 import { declarationsList, riskDetails } from '@/utils/mockData';
 import type { Declaration } from '@/utils/mockData';
@@ -27,31 +30,30 @@ const { Title } = Typography;
 const DeclarationList: React.FC = () => {
     const router = useRouter();
     const { isDarkMode } = useTheme();
+    const { setGlobalChecking } = useDashboard();
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const [searchText, setSearchText] = useState('');
     const [loading, setLoading] = useState(false);
-    const [isChecking, setIsChecking] = useState(false);
+    // Removed: const [isChecking, setIsChecking] = useState(false);
 
     const handleStatusCheck = () => {
-        setIsChecking(true);
+        setGlobalChecking(true); // Changed from setIsChecking(true)
         setTimeout(() => {
-            setIsChecking(false);
+            setGlobalChecking(false); // Changed from setIsChecking(false)
             notification.success({
-                message: 'İşlem Tamamlandı',
-                description: 'Statü kontrol işlemi tamamlanmıştır.',
-                placement: 'topRight',
-                style: {
-                    backgroundColor: isDarkMode ? '#141414' : '#ffffff',
-                    color: isDarkMode ? '#ffffff' : '#000000',
-                    border: `1px solid ${isDarkMode ? '#303030' : '#e2e2e4'}`,
-                },
+                message: 'Statü Güncellendi', // Updated message
+                description: 'Seçilen beyannamelerin statüleri başarıyla güncellendi.', // Updated description
+                placement: 'topRight'
+                // Removed style object
             });
-        }, 2500);
+        }, 2000); // Changed timeout duration
     };
 
     // Drawer State
     const [drawerVisible, setDrawerVisible] = useState(false);
-    const [selectedRiskDetail, setSelectedRiskDetail] = useState<{ code: string; subject: string; details: string; relatedItem: string } | null>(null);
+    const [selectedRiskDetail, setSelectedRiskDetail] = useState<Risk | null>(null);
+    const [historyDrawerVisible, setHistoryDrawerVisible] = useState(false);
+    const [selectedHistoryRecord, setSelectedHistoryRecord] = useState<Declaration | null>(null);
 
     // Filter States
     const [showColumnFilters, setShowColumnFilters] = useState(false);
@@ -268,6 +270,19 @@ const DeclarationList: React.FC = () => {
                             onClick={(e) => {
                                 e.stopPropagation();
                                 handleStatusCheck();
+                            }}
+                            className={isDarkMode ? 'hover:bg-[#303030] text-white' : 'bg-gray-50 hover:bg-black hover:text-white transition-colors'}
+                        />
+                    </Tooltip>
+                    <Tooltip title="İşlem Geçmişi">
+                        <Button
+                            type="text"
+                            shape="circle"
+                            icon={<HistoryOutlined />}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedHistoryRecord(record);
+                                setHistoryDrawerVisible(true);
                             }}
                             className={isDarkMode ? 'hover:bg-[#303030] text-white' : 'bg-gray-50 hover:bg-black hover:text-white transition-colors'}
                         />
@@ -651,12 +666,7 @@ const DeclarationList: React.FC = () => {
                     )}
                 </div>
 
-                {isChecking && (
-                    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center flex-col gap-4">
-                        <Spin size="large" />
-                        <span className="text-white font-medium text-lg">Kontrol ediliyor...</span>
-                    </div>
-                )}
+
 
                 <ConfigProvider
                     theme={{
@@ -750,9 +760,81 @@ const DeclarationList: React.FC = () => {
                                 </Button>
                             </div>
                         </div>
+
                     ) : <Empty description="Risk detayı bulunamadı" />}
                 </Drawer>
-            </div>
+
+                {/* History Drawer */}
+                <Drawer
+                    title={
+                        <div className="flex items-center gap-2">
+                            <HistoryOutlined className="text-blue-500" />
+                            <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>İşlem Geçmişi</span>
+                        </div>
+                    }
+                    placement="right"
+                    onClose={() => setHistoryDrawerVisible(false)}
+                    open={historyDrawerVisible}
+                    width={400}
+                    maskStyle={{ backdropFilter: 'none' }}
+                    headerStyle={{ backgroundColor: isDarkMode ? '#141414' : '#fff', borderBottom: isDarkMode ? '1px solid #303030' : '1px solid #f0f0f0' }}
+                    bodyStyle={{ backgroundColor: isDarkMode ? '#141414' : '#fff' }}
+                >
+                    {selectedHistoryRecord ? (
+                        <Timeline
+                            mode="left"
+                            items={[
+                                {
+                                    color: 'green',
+                                    children: (
+                                        <>
+                                            <div className={`font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Beyanname Oluşturuldu</div>
+                                            <div className="text-xs text-gray-500">26.01.2024 14:30 - Sistem</div>
+                                        </>
+                                    ),
+                                },
+                                {
+                                    color: 'blue',
+                                    children: (
+                                        <>
+                                            <div className={`font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Customs X-ray Ön Analiz Başlatıldı</div>
+                                            <div className="text-xs text-gray-500">26.01.2024 14:35 - Otomasyon</div>
+                                        </>
+                                    ),
+                                },
+                                {
+                                    color: 'orange',
+                                    children: (
+                                        <>
+                                            <div className={`font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Riskler Tespit Edildi</div>
+                                            <div className="text-xs text-gray-500">26.01.2024 14:36 - Customs X-ray AI</div>
+                                            <div className={`mt-1 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Potansiyel GTİP uyumsuzluğu ve menşei riski tespit edildi.</div>
+                                        </>
+                                    ),
+                                },
+                                {
+                                    dot: <ExportOutlined className="text-blue-500" />,
+                                    children: (
+                                        <>
+                                            <div className={`font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>TPS Başvurusu Yapıldı</div>
+                                            <div className="text-xs text-gray-500">26.01.2024 15:00 - Operasyon Uzmanı</div>
+                                        </>
+                                    ),
+                                },
+                                {
+                                    color: 'gray',
+                                    children: (
+                                        <>
+                                            <div className={`font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>İntaç Bekleniyor</div>
+                                            <div className="text-xs text-gray-500">İşlem devam ediyor...</div>
+                                        </>
+                                    ),
+                                },
+                            ]}
+                        />
+                    ) : <Empty description="İşlem geçmişi bulunamadı" />}
+                </Drawer>
+            </div >
         </div >
     );
 };

@@ -63,6 +63,8 @@ interface DashboardContextType {
     availableWidgets: Widget[];
     drawerVisible: boolean;
     setDrawerVisible: (visible: boolean) => void;
+    isGlobalChecking: boolean;
+    setGlobalChecking: (checking: boolean) => void;
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
@@ -118,6 +120,7 @@ const DEFAULT_DASHBOARD: DashboardConfig = {
 export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [isEditing, setEditing] = useState(false);
     const [drawerVisible, setDrawerVisible] = useState(false);
+    const [isGlobalChecking, setGlobalChecking] = useState(false);
     const [activeSegment, setActiveSegment] = useState<Segment>('B2B');
     const [dashboards, setDashboards] = useState<DashboardConfig[]>([DEFAULT_DASHBOARD]);
     const [currentDashboardId, setCurrentDashboardId] = useState<string>('default');
@@ -302,7 +305,9 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             removeWidget,
             availableWidgets: AVAILABLE_WIDGETS,
             drawerVisible,
-            setDrawerVisible
+            setDrawerVisible,
+            isGlobalChecking,
+            setGlobalChecking
         }}>
             {children}
         </DashboardContext.Provider>
