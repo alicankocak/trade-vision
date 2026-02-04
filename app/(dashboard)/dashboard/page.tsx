@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '@/context/ThemeContext';
-import { Button, Dropdown, MenuProps, Input, Drawer, Checkbox, message, Segmented } from 'antd';
+import { Button, Dropdown, MenuProps, Input, Drawer, Checkbox, message, Segmented, ConfigProvider } from 'antd';
 import {
     PlusOutlined,
     EditOutlined,
@@ -239,7 +239,7 @@ const Dashboard: React.FC = () => {
                             />
                         ) : (
                             <div className="flex items-center gap-2">
-                                <h1 className={`text-2xl font-bold m-0 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
+                                <h1 className={`text-[20px] font-bold m-0 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
                                     {dashboardName}
                                 </h1>
                                 <Dropdown menu={{ items: dashboardMenu }} trigger={['click']}>
@@ -255,14 +255,27 @@ const Dashboard: React.FC = () => {
                         )}
                     </div>
 
-                    <Segmented
-                        options={[
-                            { label: 'B2B', value: 'B2B' },
-                            { label: 'B2C', value: 'B2C' }
-                        ]}
-                        value={activeSegment}
-                        onChange={(val) => setActiveSegment(val as 'B2B' | 'B2C')}
-                    />
+                    <ConfigProvider
+                        theme={{
+                            components: {
+                                Segmented: {
+                                    itemSelectedBg: isDarkMode ? '#ffffff' : '#000000',
+                                    itemSelectedColor: isDarkMode ? '#000000' : '#ffffff',
+                                    trackBg: isDarkMode ? '#1f1f1f' : '#ebebeb',
+                                }
+                            }
+                        }}
+                    >
+                        <Segmented
+                            options={[
+                                { label: 'B2B', value: 'B2B' },
+                                { label: 'B2C', value: 'B2C' }
+                            ]}
+                            value={activeSegment}
+                            onChange={(val) => setActiveSegment(val as 'B2B' | 'B2C')}
+                            style={{ width: 'fit-content' }}
+                        />
+                    </ConfigProvider>
                 </div>
 
                 {isEditing ? (

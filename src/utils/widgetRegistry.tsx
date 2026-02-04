@@ -115,9 +115,7 @@ export const PastelCardComponent = ({
                     {icon}
                 </div>
 
-                <div className={`p-1 rounded-full cursor-pointer ${isDarkMode ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}`}>
-                    <MoreOutlined style={{ fontSize: '20px' }} />
-                </div>
+                {/* Removed Overflow Menu */}
             </div>
 
             {/* Content Area */}

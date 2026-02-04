@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Segmented, Typography, Table, Input, Button, Tag, Dropdown, Space, Empty, Tooltip, Checkbox, Popover, Drawer, Divider, Spin, notification } from 'antd';
+import { Segmented, Typography, Table, Input, Button, Tag, Dropdown, Space, Empty, Tooltip, Checkbox, Popover, Drawer, Divider, Spin, notification, Select, ConfigProvider, theme } from 'antd';
 import {
     SearchOutlined,
     MoreOutlined,
@@ -13,7 +13,8 @@ import {
     SyncOutlined,
     CheckCircleOutlined,
     FileTextOutlined,
-    ClockCircleOutlined
+    ClockCircleOutlined,
+    FileSyncOutlined
 } from '@ant-design/icons';
 import { useTheme } from '@/context/ThemeContext';
 import type { ColumnsType } from 'antd/es/table';
@@ -53,11 +54,16 @@ const DeclarationList: React.FC = () => {
     const [selectedRiskDetail, setSelectedRiskDetail] = useState<{ code: string; subject: string; details: string; relatedItem: string } | null>(null);
 
     // Filter States
-    const [openFilter, setOpenFilter] = useState(false);
-    const [intacFilter, setIntacFilter] = useState<'All' | 'Received' | 'NotReceived'>('All');
-    const [riskFilter, setRiskFilter] = useState<string[]>([]);
-    const hasActiveFilters = intacFilter !== 'All' || riskFilter.length > 0;
-    const filterCount = (intacFilter !== 'All' ? 1 : 0) + riskFilter.length;
+    const [showColumnFilters, setShowColumnFilters] = useState(false);
+    const [columnFilters, setColumnFilters] = useState({
+        seller: null as string | null,
+        buyer: null as string | null,
+        riskStatus: null as string | null,
+        intacStatus: null as string | null,
+        riskCodesAbsolute: [] as string[],
+        riskCodesPotential: [] as string[],
+        riskCodesML: [] as string[],
+    });
 
     const [activeSegment, setActiveSegment] = useState<'B2B' | 'B2C'>('B2B');
     const [senderSearchText, setSenderSearchText] = useState('');
@@ -72,33 +78,43 @@ const DeclarationList: React.FC = () => {
 
     // Filter Logic
     const currentDataSource = activeSegment === 'B2B' ? declarationsList : b2cData;
-
-    const filteredData = currentDataSource.filter((item) => {
-
-        // Global Text Search
+    const filteredData = currentDataSource.filter(item => {
+        // Global Search
         const matchesGlobalSearch =
             item.no.toLowerCase().includes(searchText.toLowerCase()) ||
+            item.seller.toLowerCase().includes(searchText.toLowerCase()) ||
             item.buyer.toLowerCase().includes(searchText.toLowerCase());
 
-        // Column Specific Filters
-        const matchesSender = item.seller.toLowerCase().includes(senderSearchText.toLowerCase());
-        const matchesBuyer = item.buyer.toLowerCase().includes(buyerSearchText.toLowerCase());
+        // Column Filters (Dropdowns)
+        const matchesSellerFilter = !columnFilters.seller ? true : item.seller === columnFilters.seller;
+        const matchesBuyerFilter = !columnFilters.buyer ? true : item.buyer === columnFilters.buyer;
 
-        // Intaç Filter
-        const matchesIntac =
-            intacFilter === 'All' ? true :
-                intacFilter === 'Received' ? item.intacDate !== '-' :
-                    item.intacDate === '-';
+        const matchesRiskStatusFilter = !columnFilters.riskStatus ? true :
+            columnFilters.riskStatus === 'absolute' ? (item.absoluteRisks && item.absoluteRisks.length > 0) :
+                columnFilters.riskStatus === 'potential' ? (item.potentialRisks && item.potentialRisks.length > 0) :
+                    columnFilters.riskStatus === 'ml' ? (item.mlRisks && item.mlRisks.length > 0) :
+                        columnFilters.riskStatus === 'none' ? (!item.absoluteRisks?.length && !item.potentialRisks?.length && !item.mlRisks?.length) : true;
 
-        // Risk Filter
-        const matchesRisk = riskFilter.length === 0 ? true :
-            riskFilter.some(filter =>
-                item.absoluteRisks?.includes(filter) ||
-                item.potentialRisks?.includes(filter) ||
-                item.mlRisks?.includes(filter)
+        const matchesIntacStatusFilter = !columnFilters.intacStatus ? true :
+            columnFilters.intacStatus === 'received' ? item.intacDate !== '-' :
+                columnFilters.intacStatus === 'pending' ? item.intacDate === '-' : true;
+
+        // Risk Code Filter
+        const selectedRiskCodes = [
+            ...columnFilters.riskCodesAbsolute,
+            ...columnFilters.riskCodesPotential,
+            ...columnFilters.riskCodesML
+        ];
+
+        const matchesRiskCodeFilter = selectedRiskCodes.length === 0 ? true :
+            selectedRiskCodes.some(code =>
+                item.absoluteRisks?.includes(code) ||
+                item.potentialRisks?.includes(code) ||
+                item.mlRisks?.includes(code)
             );
 
-        return matchesGlobalSearch && matchesIntac && matchesRisk && matchesSender && matchesBuyer;
+        return matchesGlobalSearch &&
+            matchesSellerFilter && matchesBuyerFilter && matchesRiskStatusFilter && matchesIntacStatusFilter && matchesRiskCodeFilter;
     });
 
     // KPI Calculations
@@ -118,14 +134,16 @@ const DeclarationList: React.FC = () => {
         onChange: onSelectChange,
     };
 
-    // Filter Handlers
-    const handleRiskFilterChange = (key: string, checked: boolean) => {
-        setRiskFilter(prev => checked ? [...prev, key] : prev.filter(k => k !== key));
-    };
-
     const clearFilters = () => {
-        setIntacFilter('All');
-        setRiskFilter([]);
+        setColumnFilters({
+            seller: null,
+            buyer: null,
+            riskStatus: null,
+            intacStatus: null,
+            riskCodesAbsolute: [],
+            riskCodesPotential: [],
+            riskCodesML: []
+        });
         setSenderSearchText('');
         setBuyerSearchText('');
         setSearchText('');
@@ -144,139 +162,37 @@ const DeclarationList: React.FC = () => {
         }
     };
 
-    // Mega Menu Config
-    const filterItems: { [key: string]: string[] } = {
-        intac: ['İntaç Yapıldı', 'İntaç Bekliyor', 'Kısmi İntaç'],
-        risk_absolute: Array.from({ length: 5 }, (_, i) => `Mutlak Risk ${i + 1}`),
-        risk_potential: Array.from({ length: 10 }, (_, i) => `Potansiyel Risk ${i + 1}`),
-        risk_ml: Array.from({ length: 5 }, (_, i) => `AI-ML Bulgusu ${i + 1}`)
-    };
-
-    const filterMenuContent = (
-        <div className="w-[800px] flex flex-col h-[400px]">
-            <div className={`p-4 border-b flex justify-between items-center shrink-0 ${isDarkMode ? 'border-[#303030] bg-[#141414] text-white' : 'border-[#e2e2e4] bg-white'}`}>
-                <span className="font-bold text-lg">Gelişmiş Filtreleme</span>
-                {hasActiveFilters && (
-                    <span className="text-gray-500 text-sm">{filterCount} filtre seçili</span>
-                )}
-            </div>
-
-            <div className={`flex-1 overflow-hidden grid grid-cols-4 divide-x ${isDarkMode ? 'divide-[#303030] bg-[#141414]' : 'divide-[#e2e2e4] bg-white'}`}>
-                <div className="p-4 flex flex-col h-full overflow-hidden">
-                    <h4 className="font-semibold text-gray-500 mb-3 text-xs tracking-wider uppercase">İntaç Durumu</h4>
-                    <div className="flex flex-col gap-2 overflow-y-auto max-h-full pr-2">
-                        <Checkbox
-                            checked={intacFilter === 'Received'}
-                            onChange={(e) => setIntacFilter(e.target.checked ? 'Received' : 'All')}
-                            className={`p-1 rounded transition-colors ${isDarkMode ? 'text-white hover:bg-[#1f1f1f]' : 'hover:bg-gray-50'}`}
-                        >
-                            İntaç Alındı
-                        </Checkbox>
-                        <Checkbox
-                            checked={intacFilter === 'NotReceived'}
-                            onChange={(e) => setIntacFilter(e.target.checked ? 'NotReceived' : 'All')}
-                            className={`p-1 rounded transition-colors ${isDarkMode ? 'text-white hover:bg-[#1f1f1f]' : 'hover:bg-gray-50'}`}
-                        >
-                            İntaç Alınmadı
-                        </Checkbox>
-                    </div>
-                </div>
-
-                {['absolute', 'potential', 'ml'].map(type => (
-                    <div key={type} className="p-4 flex flex-col h-full overflow-hidden">
-                        <h4 className="font-semibold text-gray-500 mb-3 text-xs tracking-wider uppercase">
-                            {type === 'absolute' ? 'Mutlak Riskler' : type === 'potential' ? 'Potansiyel Riskler' : 'AI & ML Bulguları'}
-                        </h4>
-                        <div className="flex flex-col gap-2 overflow-y-auto max-h-full pr-2">
-                            {filterItems[`risk_${type}`].map(code => (
-                                <Checkbox
-                                    key={code}
-                                    checked={riskFilter.includes(code)}
-                                    onChange={(e) => handleRiskFilterChange(code, e.target.checked)}
-                                    className={`p-1 rounded transition-colors ${isDarkMode ? 'text-white hover:bg-[#1f1f1f]' : 'hover:bg-gray-50'}`}
-                                >
-                                    {code}
-                                </Checkbox>
-                            ))}
-                        </div>
-                    </div>
-                ))}
-            </div>
-
-            <div className={`p-4 border-t flex justify-between items-center shrink-0 ${isDarkMode ? 'border-[#303030] bg-[#141414]' : 'border-[#e2e2e4] bg-white'}`}>
-                <Button
-                    onClick={clearFilters}
-                    className={isDarkMode ? 'border-[#303030] text-gray-300 hover:text-white hover:border-white' : 'border-gray-300 text-black hover:border-black hover:text-black'}
-                >
-                    Filtreyi Temizle
-                </Button>
-                <Button
-                    type="primary"
-                    onClick={() => setOpenFilter(false)}
-                    className={isDarkMode ? 'bg-white text-black hover:bg-gray-200' : 'bg-black hover:bg-gray-800'}
-                >
-                    Filtreyi Uygula
-                </Button>
-            </div>
-        </div>
-    );
+    // Risk Code Options
+    const absoluteRiskOptions = Array.from({ length: 5 }, (_, i) => `Mutlak Risk ${i + 1}`).map(code => ({ label: code, value: code }));
+    const potentialRiskOptions = Array.from({ length: 10 }, (_, i) => `Potansiyel Risk ${i + 1}`).map(code => ({ label: code, value: code }));
+    const mlRiskOptions = Array.from({ length: 5 }, (_, i) => `AI-ML Bulgusu ${i + 1}`).map(code => ({ label: code, value: code }));
 
     const columns: ColumnsType<Declaration> = [
         {
             title: 'Beyanname No',
             dataIndex: 'no',
             key: 'no',
+            sorter: (a, b) => a.no.localeCompare(b.no),
             render: (text) => <span className={`font-semibold ${isDarkMode ? 'text-white' : ''}`}>{text}</span>,
         },
         {
-            title: (
-                <div className="flex flex-col gap-2 pb-2">
-                    <span>Gönderici Adı</span>
-                    <Input
-                        placeholder="Ara..."
-                        size="small"
-                        prefix={<SearchOutlined className="text-gray-400" />}
-                        value={senderSearchText}
-                        onChange={e => setSenderSearchText(e.target.value)}
-                        className={`rounded-lg ${isDarkMode ? 'bg-[#1f1f1f] border-[#303030] text-white' : ''}`}
-                        allowClear
-                        onClick={e => e.stopPropagation()}
-                    />
-                </div>
-            ),
+            title: 'Gönderici Adı',
             dataIndex: 'seller',
             key: 'seller',
             width: 200,
+            sorter: (a, b) => a.seller.localeCompare(b.seller),
             render: (text) => <span className={isDarkMode ? 'text-gray-300' : ''}>{text}</span>,
         },
         {
-            title: (
-                <div className="flex flex-col gap-2 pb-2">
-                    <span>Alıcı Adı</span>
-                    <Input
-                        placeholder="Ara..."
-                        size="small"
-                        prefix={<SearchOutlined className="text-gray-400" />}
-                        value={buyerSearchText}
-                        onChange={e => setBuyerSearchText(e.target.value)}
-                        className={`rounded-lg ${isDarkMode ? 'bg-[#1f1f1f] border-[#303030] text-white' : ''}`}
-                        allowClear
-                        onClick={e => e.stopPropagation()}
-                    />
-                </div>
-            ),
+            title: 'Alıcı Adı',
             dataIndex: 'buyer',
             key: 'buyer',
             width: 200,
+            sorter: (a, b) => a.buyer.localeCompare(b.buyer),
             render: (text) => <span className={isDarkMode ? 'text-gray-300' : ''}>{text}</span>,
         },
         {
-            title: (
-                <div className="flex flex-col items-center">
-                    <span>Mutlak Risk</span>
-                    <span className="text-xs text-gray-400 font-normal">Toplam: {totalAbsoluteRisk}</span>
-                </div>
-            ),
+            title: 'Mutlak Risk',
             key: 'abs_risk_col',
             align: 'center',
             render: (_, record) => (
@@ -288,12 +204,7 @@ const DeclarationList: React.FC = () => {
             ),
         },
         {
-            title: (
-                <div className="flex flex-col items-center">
-                    <span>Potansiyel Risk</span>
-                    <span className="text-xs text-gray-400 font-normal">Toplam: {totalPotentialRisk}</span>
-                </div>
-            ),
+            title: 'Potansiyel Risk',
             key: 'pot_risk_col',
             align: 'center',
             render: (_, record) => (
@@ -305,12 +216,7 @@ const DeclarationList: React.FC = () => {
             ),
         },
         {
-            title: (
-                <div className="flex flex-col items-center">
-                    <span>AI-ML Bulguları</span>
-                    <span className="text-xs text-gray-400 font-normal">Toplam: {totalMLRisk}</span>
-                </div>
-            ),
+            title: 'AI-ML Bulguları',
             key: 'ml_risk_col',
             align: 'center',
             render: (_, record) => (
@@ -325,6 +231,11 @@ const DeclarationList: React.FC = () => {
             title: 'İntaç Tarihi',
             dataIndex: 'intacDate',
             key: 'intacDate',
+            sorter: (a, b) => {
+                if (a.intacDate === '-') return 1;
+                if (b.intacDate === '-') return -1;
+                return a.intacDate.localeCompare(b.intacDate);
+            },
             render: (text) => (
                 <span className={text === '-' ? 'text-red-400 font-medium' : isDarkMode ? 'text-gray-300' : 'text-gray-800'}>
                     {text === '-' ? 'İntaç tarihi almadı' : text}
@@ -349,28 +260,19 @@ const DeclarationList: React.FC = () => {
                             className={isDarkMode ? 'hover:bg-[#303030] text-white' : 'bg-gray-50 hover:bg-black hover:text-white transition-colors'}
                         />
                     </Tooltip>
-                    <Dropdown
-                        menu={{
-                            items: [
-                                {
-                                    key: '1',
-                                    label: 'Detaya Git',
-                                    icon: <EyeOutlined />,
-                                    onClick: () => router.push(`/declarations/${record.key}`),
-                                },
-                                {
-                                    key: '2',
-                                    label: 'Statü Güncelle',
-                                    icon: <SyncOutlined />,
-                                    onClick: () => handleStatusCheck(),
-                                },
-                            ],
-                        }}
-                        trigger={['click']}
-                    >
-                        <Button type="text" shape="circle" icon={<MoreOutlined className={isDarkMode ? 'text-white' : ''} />} />
-                    </Dropdown>
-                </div >
+                    <Tooltip title="Statü Güncelle">
+                        <Button
+                            type="text"
+                            shape="circle"
+                            icon={<FileSyncOutlined />}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleStatusCheck();
+                            }}
+                            className={isDarkMode ? 'hover:bg-[#303030] text-white' : 'bg-gray-50 hover:bg-black hover:text-white transition-colors'}
+                        />
+                    </Tooltip>
+                </div>
             ),
         },
     ];
@@ -411,7 +313,7 @@ const DeclarationList: React.FC = () => {
             <div className="flex flex-col gap-6"> {/* Removed p-1, increased gap */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
-                        <Title level={2} style={{ margin: 0, color: isDarkMode ? 'white' : 'black' }}>
+                        <Title level={4} style={{ margin: 0, color: isDarkMode ? 'white' : 'black' }}>
                             Beyanname Listesi
                         </Title>
                         <span className={isDarkMode ? 'text-gray-400' : 'text-gray-500'}>Tüm ithalat ve ihracat beyannamelerinizi buradan yönetin.</span>
@@ -419,14 +321,27 @@ const DeclarationList: React.FC = () => {
                 </div>
 
                 <div className="flex items-center">
-                    <Segmented
-                        options={[
-                            { label: 'B2B', value: 'B2B' },
-                            { label: 'B2C', value: 'B2C' }
-                        ]}
-                        value={activeSegment}
-                        onChange={(val) => setActiveSegment(val as 'B2B' | 'B2C')}
-                    />
+                    <ConfigProvider
+                        theme={{
+                            components: {
+                                Segmented: {
+                                    itemSelectedBg: isDarkMode ? '#ffffff' : '#000000',
+                                    itemSelectedColor: isDarkMode ? '#000000' : '#ffffff',
+                                    trackBg: isDarkMode ? '#1f1f1f' : '#ebebeb',
+                                }
+                            }
+                        }}
+                    >
+                        <Segmented
+                            options={[
+                                { label: 'B2B', value: 'B2B' },
+                                { label: 'B2C', value: 'B2C' }
+                            ]}
+                            value={activeSegment}
+                            onChange={(val) => setActiveSegment(val as 'B2B' | 'B2C')}
+                            style={{ width: 'fit-content' }}
+                        />
+                    </ConfigProvider>
                 </div>
 
                 <div className={`grid grid-cols-1 md:grid-cols-5 gap-4`}>
@@ -541,66 +456,199 @@ const DeclarationList: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="p-4 rounded-lg border mb-4 shadow-sm flex flex-col md:flex-row gap-4 justify-between items-center transition-colors duration-200"
+                <div className="p-4 rounded-lg border mb-4 shadow-sm flex flex-col gap-4 transition-colors duration-200"
                     style={{ backgroundColor: searchBg, borderColor: searchBorder }}
                 >
-                    <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto items-center">
-                        <Input
-                            placeholder="Beyanname No, Firma veya Tutar Ara..."
-                            prefix={<SearchOutlined className={isDarkMode ? 'text-gray-400' : 'text-gray-400'} />}
-                            className="w-[280px]"
-                            value={searchText}
-                            onChange={handleSearch}
-                            allowClear
-                            style={{ backgroundColor: isDarkMode ? '#1f1f1f' : '#fff', borderColor: isDarkMode ? '#303030' : '#d9d9d9', color: isDarkMode ? '#fff' : '#000' }}
-                        />
-                    </div>
-
-                    <div className="flex gap-2 items-center">
-                        <Button
-                            icon={<ExportOutlined />}
-                            style={{ backgroundColor: isDarkMode ? '#9f9fa7' : 'transparent', color: isDarkMode ? '#ffffff' : 'inherit', border: isDarkMode ? 'none' : '' }}
-                        >
-                            Dışa Aktar
-                        </Button>
-
-                        <Popover
-                            content={filterMenuContent}
-                            trigger="click"
-                            open={openFilter}
-                            onOpenChange={setOpenFilter}
-                            placement="bottomRight"
-                            arrow={false}
-                            overlayClassName={isDarkMode ? 'dark-popover' : ''}
-                        >
-                            <Button
-                                icon={<FilterOutlined />}
-                                style={{
-                                    backgroundColor: isDarkMode ? '#3f3f46' : (hasActiveFilters ? '#f3f4f6' : '#000000'),
-                                    color: isDarkMode ? '#ffffff' : (hasActiveFilters ? '#000000' : '#ffffff'),
-                                    borderColor: isDarkMode ? '#3f3f46' : (hasActiveFilters ? '#d1d5db' : '#000000')
-                                }}
-                                className="transition-colors"
-                            >
-                                Gelişmiş Filtre {filterCount > 0 && `(${filterCount})`}
-                            </Button>
-                        </Popover>
-
-                        {selectedRowKeys.length > 0 && (
-                            <Button
-                                icon={<CheckCircleOutlined />}
-                                onClick={handleStatusCheck}
-                                disabled={isChecking}
-                                style={{
-                                    backgroundColor: isDarkMode ? '#3f3f46' : '#f4f4f5',
-                                    color: isDarkMode ? '#ffffff' : '#000000',
-                                    borderColor: isDarkMode ? '#3f3f46' : '#d4d4d8'
+                    <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
+                        <div className="flex gap-2 items-center w-full md:w-auto">
+                            <Input
+                                placeholder="Beyanname No, Firma veya Tutar Ara..."
+                                prefix={<SearchOutlined className={isDarkMode ? 'text-gray-400' : 'text-gray-400'} />}
+                                className="w-[280px]"
+                                value={searchText}
+                                onChange={handleSearch}
+                                allowClear
+                                style={{ backgroundColor: isDarkMode ? '#1f1f1f' : '#fff', borderColor: isDarkMode ? '#303030' : '#d9d9d9', color: isDarkMode ? '#fff' : '#000' }}
+                            />
+                            <ConfigProvider
+                                theme={{
+                                    token: {
+                                        colorPrimary: isDarkMode ? '#ffffff' : '#000000',
+                                        colorTextLightSolid: isDarkMode ? '#000000' : '#ffffff'
+                                    }
                                 }}
                             >
-                                Statü Kontrol Et
+                                <Button
+                                    type="primary"
+                                    icon={<FilterOutlined />}
+                                    onClick={() => setShowColumnFilters(!showColumnFilters)}
+                                    className="flex items-center justify-center border-0"
+                                >
+                                    Gelişmiş Filtre
+                                    {!showColumnFilters && (
+                                        (() => {
+                                            const count = [
+                                                columnFilters.seller,
+                                                columnFilters.buyer,
+                                                columnFilters.riskStatus,
+                                                columnFilters.intacStatus,
+                                                ...(columnFilters.riskCodesAbsolute?.length ? ['riskCodesAbsolute'] : []),
+                                                ...(columnFilters.riskCodesPotential?.length ? ['riskCodesPotential'] : []),
+                                                ...(columnFilters.riskCodesML?.length ? ['riskCodesML'] : [])
+                                            ].filter(Boolean).length;
+                                            return count > 0 ? (
+                                                <span className="ml-2 bg-red-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                                                    {count}
+                                                </span>
+                                            ) : null;
+                                        })()
+                                    )}
+                                </Button>
+                            </ConfigProvider>
+                        </div>
+
+                        <div className="flex gap-2 items-center">
+                            <Button
+                                icon={<ExportOutlined />}
+                                style={{ backgroundColor: isDarkMode ? '#9f9fa7' : 'transparent', color: isDarkMode ? '#ffffff' : 'inherit', border: isDarkMode ? 'none' : '' }}
+                            >
+                                Dışa Aktar
                             </Button>
-                        )}
+
+                            {selectedRowKeys.length > 0 && (
+                                <Button
+                                    icon={<CheckCircleOutlined />}
+                                    onClick={handleStatusCheck}
+                                    disabled={isChecking}
+                                    style={{
+                                        backgroundColor: isDarkMode ? '#3f3f46' : '#f4f4f5',
+                                        color: isDarkMode ? '#ffffff' : '#000000',
+                                        borderColor: isDarkMode ? '#3f3f46' : '#d4d4d8'
+                                    }}
+                                >
+                                    Statü Kontrol Et
+                                </Button>
+                            )}
+                        </div>
                     </div>
+
+                    {/* Expandable Column Filters */}
+                    {showColumnFilters && (
+                        <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t ${isDarkMode ? 'border-[#303030]' : 'border-gray-100'}`}>
+                            {/* Seller Filter */}
+                            <div className="flex flex-col gap-1">
+                                <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Gönderici</span>
+                                <Select
+                                    placeholder="Seçiniz"
+                                    allowClear
+                                    className="w-full"
+                                    value={columnFilters.seller}
+                                    onChange={(value) => setColumnFilters(prev => ({ ...prev, seller: value }))}
+                                    options={Array.from(new Set(currentDataSource.map(d => d.seller))).map(s => ({ label: s, value: s }))}
+                                    popupClassName={isDarkMode ? 'dark-select-dropdown' : ''}
+                                />
+                            </div>
+
+                            {/* Buyer Filter */}
+                            <div className="flex flex-col gap-1">
+                                <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Alıcı</span>
+                                <Select
+                                    placeholder="Seçiniz"
+                                    allowClear
+                                    className="w-full"
+                                    value={columnFilters.buyer}
+                                    onChange={(value) => setColumnFilters(prev => ({ ...prev, buyer: value }))}
+                                    options={Array.from(new Set(currentDataSource.map(d => d.buyer))).map(b => ({ label: b, value: b }))}
+                                    popupClassName={isDarkMode ? 'dark-select-dropdown' : ''}
+                                />
+                            </div>
+
+                            {/* Risk Filter */}
+                            <div className="flex flex-col gap-1">
+                                <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Risk Durumu</span>
+                                <Select
+                                    placeholder="Seçiniz"
+                                    allowClear
+                                    className="w-full"
+                                    value={columnFilters.riskStatus}
+                                    onChange={(value) => setColumnFilters(prev => ({ ...prev, riskStatus: value }))}
+                                    options={[
+                                        { label: 'Mutlak Risk Var', value: 'absolute' },
+                                        { label: 'Potansiyel Risk Var', value: 'potential' },
+                                        { label: 'AI-ML Bulgusu Var', value: 'ml' },
+                                        { label: 'Risk Yok', value: 'none' },
+                                    ]}
+                                    popupClassName={isDarkMode ? 'dark-select-dropdown' : ''}
+                                />
+                            </div>
+
+                            {/* Intac Filter */}
+                            <div className="flex flex-col gap-1">
+                                <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>İntaç Durumu</span>
+                                <Select
+                                    placeholder="Seçiniz"
+                                    allowClear
+                                    className="w-full"
+                                    value={columnFilters.intacStatus}
+                                    onChange={(value) => setColumnFilters(prev => ({ ...prev, intacStatus: value }))}
+                                    options={[
+                                        { label: 'İntaç Alındı', value: 'received' },
+                                        { label: 'İntaç Bekliyor', value: 'pending' },
+                                        { label: 'Kısmi İntaç', value: 'partial' },
+                                    ]}
+                                    popupClassName={isDarkMode ? 'dark-select-dropdown' : ''}
+                                />
+                            </div>
+
+                            {/* Absolute Risk Codes Filter */}
+                            <div className="flex flex-col gap-1">
+                                <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Mutlak Riskler</span>
+                                <Select
+                                    mode="multiple"
+                                    placeholder="Seçiniz"
+                                    allowClear
+                                    className="w-full"
+                                    value={columnFilters.riskCodesAbsolute}
+                                    onChange={(value) => setColumnFilters(prev => ({ ...prev, riskCodesAbsolute: value }))}
+                                    options={absoluteRiskOptions}
+                                    popupClassName={isDarkMode ? 'dark-select-dropdown' : ''}
+                                    maxTagCount="responsive"
+                                />
+                            </div>
+
+                            {/* Potential Risk Codes Filter */}
+                            <div className="flex flex-col gap-1">
+                                <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Potansiyel Riskler</span>
+                                <Select
+                                    mode="multiple"
+                                    placeholder="Seçiniz"
+                                    allowClear
+                                    className="w-full"
+                                    value={columnFilters.riskCodesPotential}
+                                    onChange={(value) => setColumnFilters(prev => ({ ...prev, riskCodesPotential: value }))}
+                                    options={potentialRiskOptions}
+                                    popupClassName={isDarkMode ? 'dark-select-dropdown' : ''}
+                                    maxTagCount="responsive"
+                                />
+                            </div>
+
+                            {/* ML Risk Codes Filter */}
+                            <div className="flex flex-col gap-1">
+                                <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>AI-ML Bulguları</span>
+                                <Select
+                                    mode="multiple"
+                                    placeholder="Seçiniz"
+                                    allowClear
+                                    className="w-full"
+                                    value={columnFilters.riskCodesML}
+                                    onChange={(value) => setColumnFilters(prev => ({ ...prev, riskCodesML: value }))}
+                                    options={mlRiskOptions}
+                                    popupClassName={isDarkMode ? 'dark-select-dropdown' : ''}
+                                    maxTagCount="responsive"
+                                />
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {isChecking && (
@@ -610,41 +658,52 @@ const DeclarationList: React.FC = () => {
                     </div>
                 )}
 
-                <div className={`rounded-[16px] border shadow-sm overflow-hidden transition-colors duration-200 ${isDarkMode ? 'border-[#303030]' : 'border-[#a1a1a1]'}`}
-                    style={{ backgroundColor: searchBg }}
+                <ConfigProvider
+                    theme={{
+                        algorithm: isDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
+                        token: {
+                            colorPrimary: isDarkMode ? '#ffffff' : '#000000',
+                            controlItemBgActive: isDarkMode ? '#262626' : '#ebebeb',
+                            controlItemBgActiveHover: isDarkMode ? '#1f1f1f' : '#f5f5f5',
+                        }
+                    }}
                 >
-                    <Table
-                        rowSelection={{
-                            type: 'checkbox',
-                            ...rowSelection,
-                        }}
-                        columns={columns}
-                        dataSource={filteredData}
-                        rowKey="key"
-                        pagination={{
-                            pageSize: 10,
-                            showTotal: (total) => `Toplam ${total} kayıt`,
-                            className: 'px-4',
-                            itemRender: (page, type, originalElement) => {
-                                if (type === 'prev' || type === 'next') {
-                                    const element = originalElement as React.ReactElement<{ style?: React.CSSProperties }>;
-                                    return React.cloneElement(element, {
-                                        style: { color: isDarkMode ? 'white' : 'black' }
-                                    });
+                    <div className={`rounded-[16px] border shadow-sm overflow-hidden transition-colors duration-200 ${isDarkMode ? 'border-[#303030]' : 'border-[#E3E3E7]'}`}
+                        style={{ backgroundColor: searchBg }}
+                    >
+                        <Table
+                            rowSelection={{
+                                type: 'checkbox',
+                                ...rowSelection,
+                            }}
+                            columns={columns}
+                            dataSource={filteredData}
+                            rowKey="key"
+                            pagination={{
+                                pageSize: 10,
+                                showTotal: (total) => `Toplam ${total} kayıt`,
+                                className: 'px-4',
+                                itemRender: (page, type, originalElement) => {
+                                    if (type === 'prev' || type === 'next') {
+                                        const element = originalElement as React.ReactElement<{ style?: React.CSSProperties }>;
+                                        return React.cloneElement(element, {
+                                            style: { color: isDarkMode ? 'white' : 'black' }
+                                        });
+                                    }
+                                    return originalElement;
                                 }
-                                return originalElement;
-                            }
-                        }}
-                        expandable={{
-                            expandedRowRender,
-                            rowExpandable: (record) => true,
-                        }}
-                        scroll={{ x: 1000 }}
-                        onRow={(record) => ({
-                            className: 'cursor-pointer group',
-                        })}
-                    />
-                </div>
+                            }}
+                            expandable={{
+                                expandedRowRender,
+                                rowExpandable: (record) => true,
+                            }}
+                            scroll={{ x: 1000 }}
+                            onRow={(record) => ({
+                                className: 'cursor-pointer group',
+                            })}
+                        />
+                    </div>
+                </ConfigProvider>
 
                 <Drawer
                     title={
@@ -694,7 +753,7 @@ const DeclarationList: React.FC = () => {
                     ) : <Empty description="Risk detayı bulunamadı" />}
                 </Drawer>
             </div>
-        </div>
+        </div >
     );
 };
 
