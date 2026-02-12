@@ -80,6 +80,9 @@ export interface Declaration {
   absoluteRisks?: Array<string>
   potentialRisks?: Array<string>
   mlRisks?: Array<string>
+  regime?: string
+  paymentMethod?: string
+  incoterm?: string
 }
 
 export const declarationsList: Array<Declaration> = [
@@ -94,6 +97,9 @@ export const declarationsList: Array<Declaration> = [
     absoluteRisks: ['red_1', 'red_2'],
     potentialRisks: ['pot_1'],
     mlRisks: [],
+    regime: '4000',
+    paymentMethod: 'Peşin',
+    incoterm: 'CIF',
   },
   {
     key: '2',
@@ -106,6 +112,9 @@ export const declarationsList: Array<Declaration> = [
     absoluteRisks: [],
     potentialRisks: ['pot_2', 'pot_3'],
     mlRisks: ['ML_1'],
+    regime: '1000',
+    paymentMethod: 'Peşin',
+    incoterm: 'FOB',
   },
   {
     key: '3',
@@ -118,6 +127,9 @@ export const declarationsList: Array<Declaration> = [
     absoluteRisks: ['red_3', 'red_8'],
     potentialRisks: [],
     mlRisks: ['ML_2'],
+    regime: '3151',
+    paymentMethod: 'Peşin',
+    incoterm: 'EXW',
   },
   {
     key: '4',
@@ -130,6 +142,9 @@ export const declarationsList: Array<Declaration> = [
     absoluteRisks: [],
     potentialRisks: [],
     mlRisks: ['ML_3'],
+    regime: '4071',
+    paymentMethod: 'Peşin',
+    incoterm: 'DAP',
   },
   {
     key: '5',
@@ -139,6 +154,9 @@ export const declarationsList: Array<Declaration> = [
     status: 'Completed',
     type: 'İthalat',
     intacDate: '25.01.2024',
+    regime: '7100',
+    paymentMethod: 'Peşin',
+    incoterm: 'FCA',
   },
   {
     key: '6',
@@ -148,6 +166,9 @@ export const declarationsList: Array<Declaration> = [
     status: 'Pending',
     type: 'İthalat',
     intacDate: '-',
+    regime: '4000',
+    paymentMethod: 'Peşin',
+    incoterm: 'CIP',
   },
   {
     key: '7',
@@ -157,6 +178,9 @@ export const declarationsList: Array<Declaration> = [
     status: 'Risk',
     type: 'İthalat',
     intacDate: '-',
+    regime: '3153',
+    paymentMethod: 'Peşin',
+    incoterm: 'CFR',
   },
   {
     key: '8',
@@ -166,6 +190,9 @@ export const declarationsList: Array<Declaration> = [
     status: 'Completed',
     type: 'İthalat',
     intacDate: '24.01.2024',
+    regime: '4000',
+    paymentMethod: 'Peşin',
+    incoterm: 'CIF',
   },
   {
     key: '9',
@@ -175,6 +202,9 @@ export const declarationsList: Array<Declaration> = [
     status: 'Processing',
     type: 'İthalat',
     intacDate: '-',
+    regime: '4000',
+    paymentMethod: 'Peşin',
+    incoterm: 'EXW',
   },
   {
     key: '10',
@@ -184,6 +214,9 @@ export const declarationsList: Array<Declaration> = [
     status: 'Completed',
     type: 'İhracat',
     intacDate: '22.01.2024',
+    regime: '1000',
+    paymentMethod: 'Peşin',
+    incoterm: 'FOB',
   },
   {
     key: '11',
@@ -193,6 +226,9 @@ export const declarationsList: Array<Declaration> = [
     status: 'Pending',
     type: 'İhracat',
     intacDate: '-',
+    regime: '1000',
+    paymentMethod: 'Peşin',
+    incoterm: 'FCA',
   },
   {
     key: '12',
@@ -202,6 +238,9 @@ export const declarationsList: Array<Declaration> = [
     status: 'Risk',
     type: 'İthalat',
     intacDate: '-',
+    regime: '4071',
+    paymentMethod: 'Peşin',
+    incoterm: 'CIF',
   },
 ]
 

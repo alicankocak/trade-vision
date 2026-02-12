@@ -48,15 +48,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       label: 'Beyanname Listesi',
       icon: <FileTextOutlined />,
     },
-    ...(isAdmin
-      ? [
-        {
-          key: '/users',
-          icon: <TeamOutlined />,
-          label: 'Kullanıcılar',
-        },
-      ]
-      : []),
+
   ]
 
   return (

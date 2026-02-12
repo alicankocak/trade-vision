@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { mockDeclarations, ExtendedDeclaration, ShippingInsurance, Tax } from './mockData';
+import { declarationFiles } from '../../utils/mockData';
 import {
     FileText,
     Calendar,
@@ -17,7 +18,8 @@ import {
     AlertCircle,
     AlertTriangle,
     Info,
-    ChevronRight
+    ChevronRight,
+    CheckCircle
 } from 'lucide-react';
 
 interface ErrorCard {
@@ -131,11 +133,8 @@ export default function DeclarationRisksTab() {
                 </div>
                 <div className="flex items-center gap-3">
                     <button className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all flex items-center gap-2 text-sm font-semibold text-gray-700">
-                        <Eye className="w-4 h-4" />
+                        <Download className="w-4 h-4" />
                         XML İndir
-                    </button>
-                    <button className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-all flex items-center gap-2 text-sm font-semibold">
-                        TCGB Statü Güncelle
                     </button>
                 </div>
             </div>
@@ -497,16 +496,106 @@ export default function DeclarationRisksTab() {
             )}
 
             {activeTab === 'documents' && (
-                <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-                    <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500 text-lg">Arşiv Dokümanları</p>
+                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                    <div className="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                            <FileText className="w-5 h-5 text-gray-700" />
+                            <h3 className="font-bold text-gray-900 text-sm">Arşiv Dokümanları</h3>
+                        </div>
+                        <span className="text-xs font-semibold text-gray-500 bg-white px-2 py-1 rounded border border-gray-200">
+                            {declarationFiles.length} Dosya
+                        </span>
+                    </div>
+                    <div className="divide-y divide-gray-100">
+                        {declarationFiles.map((file) => (
+                            <div key={file.id} className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between group">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center">
+                                        <FileText className="w-5 h-5 text-red-600" />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-semibold text-gray-900 text-sm">{file.name}</h4>
+                                        <div className="flex items-center gap-2 mt-0.5">
+                                            <span className="text-xs text-gray-500">{file.type}</span>
+                                            <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                                            <span className="text-xs text-gray-400">{file.size}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
+                                        <Eye className="w-4 h-4" />
+                                    </button>
+                                    <button className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all">
+                                        <Download className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
 
             {activeTab === 'history' && (
-                <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-                    <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500 text-lg">İşlem Geçmişi</p>
+                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                    <div className="p-4 border-b border-gray-200 bg-gray-50">
+                        <div className="flex items-center gap-2">
+                            <TrendingUp className="w-5 h-5 text-gray-700" />
+                            <h3 className="font-bold text-gray-900 text-sm">İşlem Geçmişi</h3>
+                        </div>
+                    </div>
+                    <div className="p-6">
+                        <div className="relative space-y-8 before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-300 before:to-transparent">
+                            <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                                <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-300 group-[.is-active]:bg-emerald-500 group-[.is-active]:text-emerald-50 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
+                                    <Truck className="w-5 h-5 text-white" />
+                                </div>
+                                <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                                    <div className="flex items-center justify-between space-x-2 mb-1">
+                                        <div className="font-bold text-slate-900">İntaç Bekleniyor</div>
+                                        <time className="font-caveat font-medium text-amber-500">İşlemde</time>
+                                    </div>
+                                    <div className="text-slate-500">Gümrük işlemleri devam ediyor...</div>
+                                </div>
+                            </div>
+                            <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                                <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-300 group-[.is-active]:bg-blue-500 group-[.is-active]:text-blue-50 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
+                                    <Receipt className="w-5 h-5 text-white" />
+                                </div>
+                                <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                                    <div className="flex items-center justify-between space-x-2 mb-1">
+                                        <div className="font-bold text-slate-900">TPS Başvurusu Yapıldı</div>
+                                        <time className="font-caveat font-medium text-slate-500">15:00</time>
+                                    </div>
+                                    <div className="text-slate-500">Operasyon Uzmanı tarafından başvuru tamamlandı.</div>
+                                </div>
+                            </div>
+                            <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                                <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-300 group-[.is-active]:bg-amber-500 group-[.is-active]:text-amber-50 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
+                                    <AlertTriangle className="w-5 h-5 text-white" />
+                                </div>
+                                <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                                    <div className="flex items-center justify-between space-x-2 mb-1">
+                                        <div className="font-bold text-slate-900">Riskler Tespit Edildi</div>
+                                        <time className="font-caveat font-medium text-slate-500">14:36</time>
+                                    </div>
+                                    <div className="text-slate-500">Customs X-ray AI tarafından potansiyel riskler belirlendi.</div>
+                                </div>
+                            </div>
+                            <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                                <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-300 group-[.is-active]:bg-green-500 group-[.is-active]:text-green-50 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
+                                    <CheckCircle className="w-5 h-5 text-white" />
+                                </div>
+                                <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                                    <div className="flex items-center justify-between space-x-2 mb-1">
+                                        <div className="font-bold text-slate-900">Beyanname Oluşturuldu</div>
+                                        <time className="font-caveat font-medium text-slate-500">14:30</time>
+                                    </div>
+                                    <div className="text-slate-500">Sistem tarafından otomatik kayıt açıldı.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
