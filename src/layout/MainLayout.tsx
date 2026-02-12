@@ -1,5 +1,7 @@
 'use client';
 
+import Image from 'next/image';
+
 import React, { useState } from 'react'
 import { Layout, Menu, ConfigProvider } from 'antd'
 import type { MenuProps } from 'antd'
@@ -90,15 +92,15 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         }}>
           <div className="flex items-center gap-3 overflow-hidden">
             <div
-              className={`min-w-8 w-8 h-8 rounded-lg flex items-center justify-center font-bold flex-shrink-0 bg-black text-white`}
+              className={`min-w-8 w-8 h-8 flex items-center justify-center flex-shrink-0`}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" /></svg>
+              <Image src="/customs-loupe-logo.png" alt="Customs Loupe" width={32} height={32} className="object-contain" />
             </div>
             {!collapsed && (
               <span
                 className={`text-base font-bold tracking-tight whitespace-nowrap ${isDarkMode ? 'text-white' : 'text-black'}`}
               >
-                TradeVision
+                Customs Loupe
               </span>
             )}
           </div>

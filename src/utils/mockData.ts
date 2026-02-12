@@ -75,6 +75,7 @@ export interface Declaration {
   buyer: string
   seller: string
   status: 'Completed' | 'Pending' | 'Risk' | 'Processing'
+  type: 'İthalat' | 'İhracat'
   intacDate: string
   absoluteRisks?: Array<string>
   potentialRisks?: Array<string>
@@ -88,6 +89,7 @@ export const declarationsList: Array<Declaration> = [
     buyer: 'ABC Lojistik',
     seller: 'Global Tech GmbH',
     status: 'Completed',
+    type: 'İthalat',
     intacDate: '26.01.2024',
     absoluteRisks: ['red_1', 'red_2'],
     potentialRisks: ['pot_1'],
@@ -99,6 +101,7 @@ export const declarationsList: Array<Declaration> = [
     buyer: 'XYZ Gümrük',
     seller: 'Shanghai Trading Co.',
     status: 'Pending',
+    type: 'İthalat',
     intacDate: '-',
     absoluteRisks: [],
     potentialRisks: ['pot_2', 'pot_3'],
@@ -110,6 +113,7 @@ export const declarationsList: Array<Declaration> = [
     buyer: 'Tekno A.Ş.',
     seller: 'EuroParts Ltd.',
     status: 'Risk',
+    type: 'İthalat',
     intacDate: '-',
     absoluteRisks: ['red_3', 'red_8'],
     potentialRisks: [],
@@ -121,6 +125,7 @@ export const declarationsList: Array<Declaration> = [
     buyer: 'Mega İthalat',
     seller: 'US Electronics Inc.',
     status: 'Processing',
+    type: 'İthalat',
     intacDate: '-',
     absoluteRisks: [],
     potentialRisks: [],
@@ -132,6 +137,7 @@ export const declarationsList: Array<Declaration> = [
     buyer: 'Global Trade',
     seller: 'Fabricca Italiana',
     status: 'Completed',
+    type: 'İthalat',
     intacDate: '25.01.2024',
   },
   {
@@ -140,6 +146,7 @@ export const declarationsList: Array<Declaration> = [
     buyer: 'Adana Tarım',
     seller: 'Agro Rus',
     status: 'Pending',
+    type: 'İthalat',
     intacDate: '-',
   },
   {
@@ -148,6 +155,7 @@ export const declarationsList: Array<Declaration> = [
     buyer: 'Bursa Otomotiv',
     seller: 'German Auto Parts',
     status: 'Risk',
+    type: 'İthalat',
     intacDate: '-',
   },
   {
@@ -156,6 +164,7 @@ export const declarationsList: Array<Declaration> = [
     buyer: 'İstanbul Kimya',
     seller: 'ChemChina',
     status: 'Completed',
+    type: 'İthalat',
     intacDate: '24.01.2024',
   },
   {
@@ -164,6 +173,7 @@ export const declarationsList: Array<Declaration> = [
     buyer: 'Antalya Turizm',
     seller: 'Hotel Supplies UK',
     status: 'Processing',
+    type: 'İthalat',
     intacDate: '-',
   },
   {
@@ -172,6 +182,7 @@ export const declarationsList: Array<Declaration> = [
     buyer: 'Ege Seramik',
     seller: 'Ceramica Esp',
     status: 'Completed',
+    type: 'İhracat',
     intacDate: '22.01.2024',
   },
   {
@@ -180,6 +191,7 @@ export const declarationsList: Array<Declaration> = [
     buyer: 'Trabzon Gıda',
     seller: 'Black Sea Traders',
     status: 'Pending',
+    type: 'İhracat',
     intacDate: '-',
   },
   {
@@ -188,6 +200,7 @@ export const declarationsList: Array<Declaration> = [
     buyer: 'Marmara Tekstil',
     seller: 'Indian Fabrics',
     status: 'Risk',
+    type: 'İthalat',
     intacDate: '-',
   },
 ]

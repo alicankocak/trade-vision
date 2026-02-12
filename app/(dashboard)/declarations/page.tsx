@@ -34,12 +34,12 @@ const DeclarationList: React.FC = () => {
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const [searchText, setSearchText] = useState('');
     const [loading, setLoading] = useState(false);
-    // Removed: const [isChecking, setIsChecking] = useState(false);
+    const [isChecking, setIsChecking] = useState(false);
 
     const handleStatusCheck = () => {
-        setGlobalChecking(true); // Changed from setIsChecking(true)
+        setIsChecking(true);
         setTimeout(() => {
-            setGlobalChecking(false); // Changed from setIsChecking(false)
+            setIsChecking(false);
             notification.success({
                 message: 'Statü Güncellendi', // Updated message
                 description: 'Seçilen beyannamelerin statüleri başarıyla güncellendi.', // Updated description
@@ -65,6 +65,7 @@ const DeclarationList: React.FC = () => {
         riskCodesAbsolute: [] as string[],
         riskCodesPotential: [] as string[],
         riskCodesML: [] as string[],
+        declarationType: 'Hepsi' as 'Hepsi' | 'İthalat' | 'İhracat',
     });
 
     const [activeSegment, setActiveSegment] = useState<'B2B' | 'B2C'>('B2B');
@@ -73,9 +74,9 @@ const DeclarationList: React.FC = () => {
 
     // B2C Mock Data (Simulated)
     const b2cData: Declaration[] = [
-        { key: '901', no: 'TR-B2C-001', seller: 'Amazon EU', status: 'Completed', buyer: 'Ali Yılmaz', mlRisks: [], absoluteRisks: [], potentialRisks: [], intacDate: '2024-03-21' },
-        { key: '902', no: 'TR-B2C-002', seller: 'AliExpress', status: 'Pending', buyer: 'Ayşe Demir', mlRisks: ['ML-101'], absoluteRisks: [], potentialRisks: ['Potansiyel Risk 1'], intacDate: '-' },
-        { key: '903', no: 'TR-B2C-003', seller: 'Ebay Seller', status: 'Completed', buyer: 'Mehmet Kaya', mlRisks: [], absoluteRisks: [], potentialRisks: [], intacDate: '2024-03-23' },
+        { key: '901', no: 'TR-B2C-001', seller: 'Amazon EU', status: 'Completed', buyer: 'Ali Yılmaz', mlRisks: [], absoluteRisks: [], potentialRisks: [], intacDate: '2024-03-21', type: 'İthalat' },
+        { key: '902', no: 'TR-B2C-002', seller: 'AliExpress', status: 'Pending', buyer: 'Ayşe Demir', mlRisks: ['ML-101'], absoluteRisks: [], potentialRisks: ['Potansiyel Risk 1'], intacDate: '-', type: 'İthalat' },
+        { key: '903', no: 'TR-B2C-003', seller: 'Ebay Seller', status: 'Completed', buyer: 'Mehmet Kaya', mlRisks: [], absoluteRisks: [], potentialRisks: [], intacDate: '2024-03-23', type: 'İthalat' },
     ];
 
     // Filter Logic
@@ -115,8 +116,10 @@ const DeclarationList: React.FC = () => {
                 item.mlRisks?.includes(code)
             );
 
+        const matchesDeclarationTypeFilter = columnFilters.declarationType === 'Hepsi' ? true : item.type === columnFilters.declarationType;
+
         return matchesGlobalSearch &&
-            matchesSellerFilter && matchesBuyerFilter && matchesRiskStatusFilter && matchesIntacStatusFilter && matchesRiskCodeFilter;
+            matchesSellerFilter && matchesBuyerFilter && matchesRiskStatusFilter && matchesIntacStatusFilter && matchesRiskCodeFilter && matchesDeclarationTypeFilter;
     });
 
     // KPI Calculations
@@ -144,7 +147,8 @@ const DeclarationList: React.FC = () => {
             intacStatus: null,
             riskCodesAbsolute: [],
             riskCodesPotential: [],
-            riskCodesML: []
+            riskCodesML: [],
+            declarationType: 'Hepsi'
         });
         setSenderSearchText('');
         setBuyerSearchText('');
@@ -227,6 +231,17 @@ const DeclarationList: React.FC = () => {
                         {record.mlRisks?.length || 0}
                     </Tag>
                 </Tooltip>
+            ),
+        },
+        {
+            title: 'Beyanname Türü',
+            dataIndex: 'type',
+            key: 'type',
+            width: 150,
+            render: (text) => (
+                <span className={`px-2 py-1 rounded text-xs font-medium ${isDarkMode ? 'bg-[#303030] text-gray-300' : 'bg-gray-100 text-[#262626]'}`}>
+                    {text}
+                </span>
             ),
         },
         {
@@ -507,6 +522,7 @@ const DeclarationList: React.FC = () => {
                                                 columnFilters.buyer,
                                                 columnFilters.riskStatus,
                                                 columnFilters.intacStatus,
+                                                columnFilters.declarationType !== 'Hepsi' ? 'declarationType' : null,
                                                 ...(columnFilters.riskCodesAbsolute?.length ? ['riskCodesAbsolute'] : []),
                                                 ...(columnFilters.riskCodesPotential?.length ? ['riskCodesPotential'] : []),
                                                 ...(columnFilters.riskCodesML?.length ? ['riskCodesML'] : [])
@@ -549,120 +565,145 @@ const DeclarationList: React.FC = () => {
 
                     {/* Expandable Column Filters */}
                     {showColumnFilters && (
-                        <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t ${isDarkMode ? 'border-[#303030]' : 'border-gray-100'}`}>
-                            {/* Seller Filter */}
-                            <div className="flex flex-col gap-1">
-                                <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Gönderici</span>
-                                <Select
-                                    placeholder="Seçiniz"
-                                    allowClear
-                                    className="w-full"
-                                    value={columnFilters.seller}
-                                    onChange={(value) => setColumnFilters(prev => ({ ...prev, seller: value }))}
-                                    options={Array.from(new Set(currentDataSource.map(d => d.seller))).map(s => ({ label: s, value: s }))}
-                                    popupClassName={isDarkMode ? 'dark-select-dropdown' : ''}
-                                />
-                            </div>
+                        <ConfigProvider
+                            theme={{
+                                token: {
+                                    controlItemBgActive: isDarkMode ? '#404040' : '#f5f5f5',
+                                    controlItemBgActiveHover: isDarkMode ? '#404040' : '#f5f5f5',
+                                }
+                            }}
+                        >
+                            <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t ${isDarkMode ? 'border-[#303030]' : 'border-gray-100'}`}>
+                                {/* Declaration Type Filter */}
+                                <div className="flex flex-col gap-1">
+                                    <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Beyanname Türü</span>
+                                    <Select
+                                        placeholder="Seçiniz"
+                                        className="w-full"
+                                        value={columnFilters.declarationType}
+                                        onChange={(value) => setColumnFilters(prev => ({ ...prev, declarationType: value }))}
+                                        options={[
+                                            { label: 'Hepsi', value: 'Hepsi' },
+                                            { label: 'İthalat', value: 'İthalat' },
+                                            { label: 'İhracat', value: 'İhracat' },
+                                        ]}
+                                        popupClassName={isDarkMode ? 'dark-select-dropdown' : ''}
+                                    />
+                                </div>
+                                {/* Seller Filter */}
+                                <div className="flex flex-col gap-1">
+                                    <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Gönderici</span>
+                                    <Select
+                                        placeholder="Seçiniz"
+                                        allowClear
+                                        className="w-full"
+                                        value={columnFilters.seller}
+                                        onChange={(value) => setColumnFilters(prev => ({ ...prev, seller: value }))}
+                                        options={Array.from(new Set(currentDataSource.map(d => d.seller))).map(s => ({ label: s, value: s }))}
+                                        popupClassName={isDarkMode ? 'dark-select-dropdown' : ''}
+                                    />
+                                </div>
 
-                            {/* Buyer Filter */}
-                            <div className="flex flex-col gap-1">
-                                <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Alıcı</span>
-                                <Select
-                                    placeholder="Seçiniz"
-                                    allowClear
-                                    className="w-full"
-                                    value={columnFilters.buyer}
-                                    onChange={(value) => setColumnFilters(prev => ({ ...prev, buyer: value }))}
-                                    options={Array.from(new Set(currentDataSource.map(d => d.buyer))).map(b => ({ label: b, value: b }))}
-                                    popupClassName={isDarkMode ? 'dark-select-dropdown' : ''}
-                                />
-                            </div>
+                                {/* Buyer Filter */}
+                                <div className="flex flex-col gap-1">
+                                    <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Alıcı</span>
+                                    <Select
+                                        placeholder="Seçiniz"
+                                        allowClear
+                                        className="w-full"
+                                        value={columnFilters.buyer}
+                                        onChange={(value) => setColumnFilters(prev => ({ ...prev, buyer: value }))}
+                                        options={Array.from(new Set(currentDataSource.map(d => d.buyer))).map(b => ({ label: b, value: b }))}
+                                        popupClassName={isDarkMode ? 'dark-select-dropdown' : ''}
+                                    />
+                                </div>
 
-                            {/* Risk Filter */}
-                            <div className="flex flex-col gap-1">
-                                <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Risk Durumu</span>
-                                <Select
-                                    placeholder="Seçiniz"
-                                    allowClear
-                                    className="w-full"
-                                    value={columnFilters.riskStatus}
-                                    onChange={(value) => setColumnFilters(prev => ({ ...prev, riskStatus: value }))}
-                                    options={[
-                                        { label: 'Mutlak Risk Var', value: 'absolute' },
-                                        { label: 'Potansiyel Risk Var', value: 'potential' },
-                                        { label: 'AI-ML Bulgusu Var', value: 'ml' },
-                                        { label: 'Risk Yok', value: 'none' },
-                                    ]}
-                                    popupClassName={isDarkMode ? 'dark-select-dropdown' : ''}
-                                />
-                            </div>
+                                {/* Risk Filter */}
+                                <div className="flex flex-col gap-1">
+                                    <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Risk Durumu</span>
+                                    <Select
+                                        placeholder="Seçiniz"
+                                        allowClear
+                                        className="w-full"
+                                        value={columnFilters.riskStatus}
+                                        onChange={(value) => setColumnFilters(prev => ({ ...prev, riskStatus: value }))}
+                                        options={[
+                                            { label: 'Mutlak Risk Var', value: 'absolute' },
+                                            { label: 'Potansiyel Risk Var', value: 'potential' },
+                                            { label: 'AI-ML Bulgusu Var', value: 'ml' },
+                                            { label: 'Risk Yok', value: 'none' },
+                                        ]}
+                                        popupClassName={isDarkMode ? 'dark-select-dropdown' : ''}
+                                    />
+                                </div>
 
-                            {/* Intac Filter */}
-                            <div className="flex flex-col gap-1">
-                                <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>İntaç Durumu</span>
-                                <Select
-                                    placeholder="Seçiniz"
-                                    allowClear
-                                    className="w-full"
-                                    value={columnFilters.intacStatus}
-                                    onChange={(value) => setColumnFilters(prev => ({ ...prev, intacStatus: value }))}
-                                    options={[
-                                        { label: 'İntaç Alındı', value: 'received' },
-                                        { label: 'İntaç Bekliyor', value: 'pending' },
-                                        { label: 'Kısmi İntaç', value: 'partial' },
-                                    ]}
-                                    popupClassName={isDarkMode ? 'dark-select-dropdown' : ''}
-                                />
-                            </div>
+                                {/* Intac Filter */}
+                                <div className="flex flex-col gap-1">
+                                    <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>İntaç Durumu</span>
+                                    <Select
+                                        placeholder="Seçiniz"
+                                        allowClear
+                                        className="w-full"
+                                        value={columnFilters.intacStatus}
+                                        onChange={(value) => setColumnFilters(prev => ({ ...prev, intacStatus: value }))}
+                                        options={[
+                                            { label: 'İntaç Alındı', value: 'received' },
+                                            { label: 'İntaç Bekliyor', value: 'pending' },
+                                            { label: 'Kısmi İntaç', value: 'partial' },
+                                        ]}
+                                        popupClassName={isDarkMode ? 'dark-select-dropdown' : ''}
+                                    />
+                                </div>
 
-                            {/* Absolute Risk Codes Filter */}
-                            <div className="flex flex-col gap-1">
-                                <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Mutlak Riskler</span>
-                                <Select
-                                    mode="multiple"
-                                    placeholder="Seçiniz"
-                                    allowClear
-                                    className="w-full"
-                                    value={columnFilters.riskCodesAbsolute}
-                                    onChange={(value) => setColumnFilters(prev => ({ ...prev, riskCodesAbsolute: value }))}
-                                    options={absoluteRiskOptions}
-                                    popupClassName={isDarkMode ? 'dark-select-dropdown' : ''}
-                                    maxTagCount="responsive"
-                                />
-                            </div>
+                                {/* Absolute Risk Codes Filter */}
+                                <div className="flex flex-col gap-1">
+                                    <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Mutlak Riskler</span>
+                                    <Select
+                                        mode="multiple"
+                                        placeholder="Seçiniz"
+                                        allowClear
+                                        className="w-full"
+                                        value={columnFilters.riskCodesAbsolute}
+                                        onChange={(value) => setColumnFilters(prev => ({ ...prev, riskCodesAbsolute: value }))}
+                                        options={absoluteRiskOptions}
+                                        popupClassName={isDarkMode ? 'dark-select-dropdown' : ''}
+                                        maxTagCount="responsive"
+                                    />
+                                </div>
 
-                            {/* Potential Risk Codes Filter */}
-                            <div className="flex flex-col gap-1">
-                                <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Potansiyel Riskler</span>
-                                <Select
-                                    mode="multiple"
-                                    placeholder="Seçiniz"
-                                    allowClear
-                                    className="w-full"
-                                    value={columnFilters.riskCodesPotential}
-                                    onChange={(value) => setColumnFilters(prev => ({ ...prev, riskCodesPotential: value }))}
-                                    options={potentialRiskOptions}
-                                    popupClassName={isDarkMode ? 'dark-select-dropdown' : ''}
-                                    maxTagCount="responsive"
-                                />
-                            </div>
+                                {/* Potential Risk Codes Filter */}
+                                <div className="flex flex-col gap-1">
+                                    <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Potansiyel Riskler</span>
+                                    <Select
+                                        mode="multiple"
+                                        placeholder="Seçiniz"
+                                        allowClear
+                                        className="w-full"
+                                        value={columnFilters.riskCodesPotential}
+                                        onChange={(value) => setColumnFilters(prev => ({ ...prev, riskCodesPotential: value }))}
+                                        options={potentialRiskOptions}
+                                        popupClassName={isDarkMode ? 'dark-select-dropdown' : ''}
+                                        maxTagCount="responsive"
+                                    />
+                                </div>
 
-                            {/* ML Risk Codes Filter */}
-                            <div className="flex flex-col gap-1">
-                                <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>AI-ML Bulguları</span>
-                                <Select
-                                    mode="multiple"
-                                    placeholder="Seçiniz"
-                                    allowClear
-                                    className="w-full"
-                                    value={columnFilters.riskCodesML}
-                                    onChange={(value) => setColumnFilters(prev => ({ ...prev, riskCodesML: value }))}
-                                    options={mlRiskOptions}
-                                    popupClassName={isDarkMode ? 'dark-select-dropdown' : ''}
-                                    maxTagCount="responsive"
-                                />
+                                {/* ML Risk Codes Filter */}
+                                <div className="flex flex-col gap-1">
+                                    <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>AI-ML Bulguları</span>
+                                    <Select
+                                        mode="multiple"
+                                        placeholder="Seçiniz"
+                                        allowClear
+                                        className="w-full"
+                                        value={columnFilters.riskCodesML}
+                                        onChange={(value) => setColumnFilters(prev => ({ ...prev, riskCodesML: value }))}
+                                        options={mlRiskOptions}
+                                        popupClassName={isDarkMode ? 'dark-select-dropdown' : ''}
+                                        maxTagCount="responsive"
+                                    />
+                                </div>
                             </div>
-                        </div>
+                        </ConfigProvider>
                     )}
                 </div>
 
