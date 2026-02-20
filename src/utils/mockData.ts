@@ -83,7 +83,28 @@ export interface Declaration {
   regime?: string
   paymentMethod?: string
   incoterm?: string
+  items?: Array<DeclarationItem>
+  // B2C Specific Fields
+  waybillNo?: string;
+  grossWeight?: number;
+  netWeight?: number;
+  packageCount?: number;
+  marketplace?: string;
+  totalTax?: number;
 }
+
+export interface DeclarationItem {
+  itemNo: number | string;
+  description?: string;
+  hsCode?: string;
+  quantity?: number;
+  unitPrice?: number;
+  totalPrice?: number;
+  currency?: string;
+  tax?: number;
+  statisticalValue?: number;
+}
+
 
 export const declarationsList: Array<Declaration> = [
   {
@@ -242,6 +263,187 @@ export const declarationsList: Array<Declaration> = [
     paymentMethod: 'Peşin',
     incoterm: 'CIF',
   },
+]
+
+export const b2cDeclarations: Array<Declaration> = [
+  {
+    key: 'b2c_1',
+    no: '1245415415',
+    buyer: 'YURTDIŞI FİRMA',
+    seller: 'EVRİM YAZILIM VE DANIŞMANLIK TİC.LTD.ŞTİ.',
+    status: 'Completed',
+    type: 'İhracat',
+    intacDate: '26.02.2026',
+    absoluteRisks: [],
+    potentialRisks: [],
+    mlRisks: [],
+    paymentMethod: 'Peşin',
+    incoterm: 'DAP',
+    waybillNo: '1245415415',
+    grossWeight: 300,
+    netWeight: 200,
+    packageCount: 0,
+    marketplace: '',
+    totalTax: 3908.04,
+    items: [
+      {
+        itemNo: 1,
+        description: '', // Empty in XML
+        hsCode: '8517',
+        totalPrice: 150,
+        currency: 'EUR',
+        statisticalValue: 174.71
+      }
+    ]
+  },
+  {
+    key: 'b2c_2',
+    no: '124578448',
+    buyer: 'AVRASYA KO G L MA MEKANİK BAKIM HİZM.SAN. VE TİC.',
+    seller: 'SECURITAS TEKNOLOJI HIZMETLERI',
+    status: 'Processing',
+    type: 'İhracat',
+    intacDate: '-',
+    absoluteRisks: [],
+    potentialRisks: ['pot_2'],
+    mlRisks: [],
+    paymentMethod: 'Peşin',
+    incoterm: 'DAP',
+    waybillNo: '124578448',
+    grossWeight: 300,
+    netWeight: 200,
+    packageCount: 0,
+    marketplace: 'Trendyol',
+    totalTax: 2302.24,
+    items: [
+      {
+        itemNo: 1,
+        description: '',
+        hsCode: '99302400',
+        totalPrice: 150,
+        currency: 'EUR',
+        statisticalValue: 174.71
+      }
+    ]
+  },
+  {
+    key: 'b2c_3',
+    no: '451545454',
+    buyer: 'AVRASYA KO G L MA MEKANİK BAKIM HİZM.SAN. VE TİC.',
+    seller: 'EVRİM YAZILIM VE DANIŞMANLIK TİC.LTD.ŞTİ.',
+    status: 'Pending',
+    type: 'İhracat',
+    intacDate: '-',
+    absoluteRisks: [],
+    potentialRisks: [],
+    mlRisks: ['ML_1'],
+    paymentMethod: 'Peşin',
+    incoterm: 'DAP',
+    waybillNo: '451545454',
+    grossWeight: 600,
+    netWeight: 500,
+    packageCount: 0,
+    marketplace: 'Trendyol',
+    totalTax: 1549.88,
+    items: [
+      {
+        itemNo: 1,
+        description: '',
+        hsCode: '99302400',
+        totalPrice: 100,
+        currency: 'EUR',
+        statisticalValue: 116.47
+      }
+    ]
+  },
+  {
+    key: 'b2c_4',
+    no: '897989878',
+    buyer: 'YURTDIŞI FİRMA',
+    seller: 'EVRİM YAZILIM VE DANIŞMANLIK TİC.LTD.ŞTİ.',
+    status: 'Completed',
+    type: 'İhracat',
+    intacDate: '15.02.2026',
+    absoluteRisks: [],
+    potentialRisks: [],
+    mlRisks: [],
+    paymentMethod: 'Peşin',
+    incoterm: 'DAP',
+    waybillNo: '897989878',
+    grossWeight: 400,
+    netWeight: 350,
+    packageCount: 0,
+    marketplace: '',
+    totalTax: 0,
+    items: [
+      {
+        itemNo: 1,
+        description: '',
+        hsCode: '99302400',
+        totalPrice: 100,
+        currency: 'EUR',
+        statisticalValue: 116.47
+      }
+    ]
+  },
+  {
+    key: 'b2c_5',
+    no: 'tasıma1',
+    buyer: 'aaaa',
+    seller: 'bbb',
+    status: 'Risk',
+    type: 'İhracat',
+    intacDate: '-',
+    absoluteRisks: ['red_1'],
+    potentialRisks: [],
+    mlRisks: [],
+    paymentMethod: 'Peşin',
+    incoterm: 'DAP',
+    waybillNo: 'tasıma1',
+    grossWeight: 5000,
+    netWeight: 4000,
+    packageCount: 10,
+    marketplace: '',
+    totalTax: 0,
+    items: [
+      {
+        itemNo: 1,
+        description: '25343100IM00126825',
+        hsCode: '39269097',
+        totalPrice: 0.15,
+        currency: 'EUR',
+        statisticalValue: 0.17
+      },
+      {
+        itemNo: 2,
+        description: '',
+        hsCode: '39269097',
+        totalPrice: 11,
+        currency: 'EUR',
+        statisticalValue: 12.81
+      }
+    ]
+  },
+  {
+    key: 'b2c_6',
+    no: 'tasıma2',
+    buyer: 'EVRİM YAZILIM VE DANIŞMANLIK TİCARET A.Ş.',
+    seller: 'EVRİM YAZILIM',
+    status: 'Pending',
+    type: 'İhracat',
+    intacDate: '-',
+    absoluteRisks: [],
+    potentialRisks: [],
+    mlRisks: [],
+    paymentMethod: 'Peşin',
+    incoterm: 'DAP',
+    waybillNo: 'tasıma2',
+    grossWeight: 1200,
+    netWeight: 200,
+    packageCount: 0,
+    marketplace: '',
+    totalTax: 0
+  }
 ]
 
 export const mockXmlData = `<?xml version="1.0" encoding="UTF-8"?>

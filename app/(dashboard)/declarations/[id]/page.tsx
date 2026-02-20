@@ -22,20 +22,33 @@ import {
     EyeOutlined,
     FilePdfOutlined,
     WarningOutlined,
+    ArrowLeftOutlined,
 } from '@ant-design/icons'
 import { useTheme } from '@/context/ThemeContext'
 import {
     declarationFiles,
     declarationRisks,
     mockXmlData,
+    declarationsList,
+    b2cDeclarations
 } from '@/utils/mockData'
 import DeclarationRisksTab from '@/components/declarations/DeclarationRisksTab'
+import { useRouter, useParams } from 'next/navigation';
+import B2CDeclarationDetail from '@/components/declarations/b2c/B2CDeclarationDetail';
 
 const { Title: _Title } = Typography
 
 const DeclarationDetail: React.FC = () => {
+    const router = useRouter();
+    const params = useParams();
     const { isDarkMode } = useTheme()
     const [loading, setLoading] = useState(true)
+
+    // Find declaration
+    const id = params?.id;
+    const allDeclarations = [...declarationsList, ...b2cDeclarations];
+    const declaration = allDeclarations.find(d => d.key === id || d.no === id);
+
     const [updating, setUpdating] = useState(false)
     const [previewVisible, setPreviewVisible] = useState(false)
     const [previewUrl, setPreviewUrl] = useState('')
@@ -44,6 +57,14 @@ const DeclarationDetail: React.FC = () => {
         const timer = setTimeout(() => setLoading(false), 800)
         return () => clearTimeout(timer)
     }, [])
+
+    // Check for B2C (assuming waybillNo exists for B2C or it comes from b2cDeclarations)
+    // We can also check if it's in b2cDeclarations specifically or property check
+    const isB2C = declaration?.waybillNo ? true : false;
+
+    if (declaration && isB2C) {
+        return <B2CDeclarationDetail declaration={declaration} />;
+    }
 
     const handleUpdateStatus = () => {
         setUpdating(true)
@@ -198,9 +219,33 @@ const DeclarationDetail: React.FC = () => {
         },
     ]
 
+    if (!declaration) {
+        return (
+            <div className="flex flex-col gap-4 pb-8 p-6">
+                <Button
+                    type="text"
+                    icon={<ArrowLeftOutlined />}
+                    onClick={() => router.back()}
+                    className="w-fit mb-4 flex items-center gap-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100/50"
+                >
+                    Geri Dön
+                </Button>
+                <Alert message="Beyanname bulunamadı" type="error" />
+            </div>
+        )
+    }
+
     return (
         <div className="flex flex-col gap-4 pb-8 p-6">
-            <DeclarationRisksTab />
+            <Button
+                type="text"
+                icon={<ArrowLeftOutlined />}
+                onClick={() => router.back()}
+                className="w-fit -ml-2 mb-2 flex items-center gap-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100/50 transition-all duration-200 font-medium"
+            >
+                Listeye Dön
+            </Button>
+            <DeclarationRisksTab declaration={declaration} />
         </div>
     )
 }

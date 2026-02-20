@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { mockDeclarations, ExtendedDeclaration, ShippingInsurance, Tax } from './mockData';
-import { declarationFiles } from '../../utils/mockData';
+import { declarationFiles, Declaration } from '../../utils/mockData';
 import {
     FileText,
     Calendar,
@@ -96,23 +96,44 @@ const mockErrors: ErrorCard[] = [
     },
 ];
 
-export default function DeclarationRisksTab() {
-    const [selectedDeclaration] = useState<ExtendedDeclaration>(mockDeclarations[0]);
+interface Props {
+    declaration?: Declaration;
+}
+
+export default function DeclarationRisksTab({ declaration }: Props) {
+    // Fallback to mock if no declaration passed (or handle gracefully)
+    // We need to cast Declaration to ExtendedDeclaration or handle difference.
+    // Use the passed declaration field if available.
+
+    // For now, let's use the passed declaration if available, or the mock one.
+    // If it's a B2C declaration (from our new list), it matches Declaration interface.
+    // The component currently expects ExtendedDeclaration for some fields (shippingInsurance, paidTaxes).
+    // We need to support the simpler Declaration interface too.
+
+    const selectedDeclaration = (declaration as unknown as ExtendedDeclaration) || mockDeclarations[0];
     const [activeTab, setActiveTab] = useState<'risks' | 'documents' | 'history'>('risks');
+    const [filterSeverity, setFilterSeverity] = useState<string>('all');
+
+    const filteredErrors = mockErrors.filter(error => {
+        if (filterSeverity === 'all') return true;
+        return error.severity === filterSeverity;
+    });
 
     const criticalCount = mockErrors.filter(e => e.severity === 'critical').length;
     const warningCount = mockErrors.filter(e => e.severity === 'warning').length;
     const infoCount = mockErrors.filter(e => e.severity === 'info').length;
 
-    const totalShippingTRY = selectedDeclaration.shippingInsurance.reduce(
+    const totalShippingTRY = selectedDeclaration.shippingInsurance?.reduce(
         (sum: number, item: ShippingInsurance) => sum + item.totalInvoiceTRY,
         0
-    );
+    ) || 0;
 
-    const totalPaidTaxes = selectedDeclaration.paidTaxes.reduce(
+    const totalPaidTaxes = selectedDeclaration.paidTaxes?.reduce(
         (sum: number, tax: Tax) => sum + tax.calculatedTax,
         0
-    );
+    ) || 0;
+
+    const isB2C = !!selectedDeclaration.waybillNo;
 
     return (
         <div className="space-y-6">
@@ -121,14 +142,14 @@ export default function DeclarationRisksTab() {
                 <div>
                     <div className="flex items-center gap-3">
                         <h1 className="text-3xl font-bold text-gray-900">
-                            {selectedDeclaration.declarationNumber}
+                            {selectedDeclaration.declarationNumber || selectedDeclaration.no}
                         </h1>
                         <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold border border-blue-200">
-                            İthalat
+                            {selectedDeclaration.type || 'İthalat'}
                         </span>
                     </div>
                     <p className="text-gray-600 mt-1">
-                        İstanbul Havaalimanı (ISL00) | {new Date(selectedDeclaration.date).toLocaleDateString('tr-TR')}
+                        İstanbul Havaalimanı (ISL00) | {selectedDeclaration.date ? new Date(selectedDeclaration.date).toLocaleDateString('tr-TR') : '-'}
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -242,59 +263,106 @@ export default function DeclarationRisksTab() {
                                     <div className="bg-white/10 backdrop-blur-md rounded-lg p-3 border border-white/20">
                                         <p className="text-xs text-blue-100 font-medium mb-1">Tarih</p>
                                         <p className="text-white font-bold text-sm">
-                                            {new Date(selectedDeclaration.date).toLocaleDateString('tr-TR')}
+                                            {selectedDeclaration.date ? new Date(selectedDeclaration.date).toLocaleDateString('tr-TR') : '-'}
                                         </p>
                                     </div>
                                     <div className="bg-white/10 backdrop-blur-md rounded-lg p-3 border border-white/20">
                                         <p className="text-xs text-blue-100 font-medium mb-1">Teslim Şekli</p>
-                                        <p className="text-white font-bold text-sm">{selectedDeclaration.deliveryType}</p>
+                                        <p className="text-white font-bold text-sm">{selectedDeclaration.deliveryType || selectedDeclaration.incoterm || '-'}</p>
                                     </div>
                                     <div className="bg-white/10 backdrop-blur-md rounded-lg p-3 border border-white/20">
                                         <p className="text-xs text-blue-100 font-medium mb-1">Ödeme</p>
-                                        <p className="text-white font-bold text-sm">{selectedDeclaration.paymentType}</p>
+                                        <p className="text-white font-bold text-sm">{selectedDeclaration.paymentType || selectedDeclaration.paymentMethod || '-'}</p>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Company Info */}
-                            <div className="grid grid-cols-3 gap-4">
-                                <div className="bg-white rounded-xl border border-gray-200 p-4">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                                            <Globe className="w-4 h-4 text-gray-700" />
+                            {/* Company Info / B2C Details */}
+                            {isB2C ? (
+                                <div className="grid grid-cols-3 gap-4">
+                                    <div className="bg-white rounded-xl border border-gray-200 p-4">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <div className="w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center">
+                                                <FileText className="w-4 h-4 text-orange-600" />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-gray-500 font-medium">Taşıma Senedi</p>
+                                                <p className="font-bold text-gray-900 text-sm">{selectedDeclaration.waybillNo}</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="text-xs text-gray-500 font-medium">Gönderici Ülke</p>
-                                            <p className="font-bold text-gray-900 text-sm">{selectedDeclaration.sender.country}</p>
-                                        </div>
+                                        <p className="text-xs text-gray-600">{selectedDeclaration.marketplace}</p>
                                     </div>
-                                    <p className="text-xs text-gray-600">{selectedDeclaration.sender.name}</p>
-                                </div>
 
-                                <div className="bg-white rounded-xl border border-gray-200 p-4">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                                            <MapPin className="w-4 h-4 text-gray-700" />
+                                    <div className="bg-white rounded-xl border border-gray-200 p-4">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+                                                <Package className="w-4 h-4 text-blue-600" />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-gray-500 font-medium">Ağırlık Bilgisi</p>
+                                                <p className="font-bold text-gray-900 text-sm">
+                                                    {selectedDeclaration.grossWeight} / {selectedDeclaration.netWeight} KG
+                                                </p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="text-xs text-gray-500 font-medium">Çıkış Ülkesi</p>
-                                            <p className="font-bold text-gray-900 text-sm">{selectedDeclaration.exitCountry}</p>
-                                        </div>
+                                        <p className="text-xs text-gray-600">Brüt / Net</p>
                                     </div>
-                                </div>
 
-                                <div className="bg-white rounded-xl border border-gray-200 p-4">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                                            <Shield className="w-4 h-4 text-gray-700" />
+                                    <div className="bg-white rounded-xl border border-gray-200 p-4">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <div className="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center">
+                                                <DollarSign className="w-4 h-4 text-green-600" />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-gray-500 font-medium">Toplam Vergi</p>
+                                                <p className="font-bold text-gray-900 text-sm">
+                                                    ₺{selectedDeclaration.totalTax?.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+                                                </p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="text-xs text-gray-500 font-medium">Rejim Kodu</p>
-                                            <p className="font-bold text-gray-900 text-sm">{selectedDeclaration.regimeCode}</p>
+                                        <p className="text-xs text-gray-600">{selectedDeclaration.packageCount || 0} Kap</p>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-3 gap-4">
+                                    <div className="bg-white rounded-xl border border-gray-200 p-4">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                                                <Globe className="w-4 h-4 text-gray-700" />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-gray-500 font-medium">Gönderici Ülke</p>
+                                                <p className="font-bold text-gray-900 text-sm">{typeof selectedDeclaration.sender === 'object' ? selectedDeclaration.sender.country : '-'}</p>
+                                            </div>
+                                        </div>
+                                        <p className="text-xs text-gray-600">{typeof selectedDeclaration.sender === 'object' ? selectedDeclaration.sender.name : selectedDeclaration.sender}</p>
+                                    </div>
+
+                                    <div className="bg-white rounded-xl border border-gray-200 p-4">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                                                <MapPin className="w-4 h-4 text-gray-700" />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-gray-500 font-medium">Çıkış Ülkesi</p>
+                                                <p className="font-bold text-gray-900 text-sm">{selectedDeclaration.exitCountry || '-'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-white rounded-xl border border-gray-200 p-4">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                                                <Shield className="w-4 h-4 text-gray-700" />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-gray-500 font-medium">Rejim Kodu</p>
+                                                <p className="font-bold text-gray-900 text-sm">{selectedDeclaration.regime || selectedDeclaration.regimeCode}</p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            )}
 
                             {/* Navlun & Sigorta + Ödenen Vergiler */}
                             <div className="grid grid-cols-2 gap-6">
@@ -307,7 +375,7 @@ export default function DeclarationRisksTab() {
                                     </div>
                                     <div className="p-4">
                                         <div className="space-y-3 max-h-[240px] overflow-y-auto">
-                                            {selectedDeclaration.shippingInsurance.slice(0, 2).map((item, index) => (
+                                            {(selectedDeclaration.shippingInsurance || []).slice(0, 2).map((item, index) => (
                                                 <div key={index} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
                                                     <div className="grid grid-cols-2 gap-2 text-xs">
                                                         <div>
@@ -356,7 +424,7 @@ export default function DeclarationRisksTab() {
                                     </div>
                                     <div className="p-4">
                                         <div className="space-y-2">
-                                            {selectedDeclaration.paidTaxes.slice(0, 2).map((tax, index) => (
+                                            {(selectedDeclaration.paidTaxes || []).slice(0, 2).map((tax, index) => (
                                                 <div key={index} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
                                                     <div className="flex items-center justify-between mb-2">
                                                         <p className="font-semibold text-gray-900 text-xs">{tax.taxType}</p>
@@ -398,19 +466,26 @@ export default function DeclarationRisksTab() {
                         <div className="col-span-12 lg:col-span-5">
                             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                                 <div className="p-4 border-b border-gray-200 bg-gray-50">
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex items-center justify-between w-full">
                                         <h3 className="font-bold text-gray-900 flex items-center gap-2">
                                             <AlertCircle className="w-5 h-5 text-red-600" />
-                                            Hata Kontrolleri ({mockErrors.length})
+                                            Risk Analizi ({mockErrors.length})
                                         </h3>
-                                        <span className="px-3 py-1 bg-red-50 text-red-700 rounded-lg text-xs font-bold border border-red-200">
-                                            {criticalCount} Mutlak
-                                        </span>
+                                        <select
+                                            value={filterSeverity}
+                                            onChange={(e) => setFilterSeverity(e.target.value)}
+                                            className="text-xs border border-gray-300 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 font-medium"
+                                        >
+                                            <option value="all">Tümü</option>
+                                            <option value="critical">Mutlak Risk</option>
+                                            <option value="warning">Potansiyel Risk</option>
+                                            <option value="info">AI & ML</option>
+                                        </select>
                                     </div>
                                 </div>
 
                                 <div className="p-4 space-y-3 max-h-[calc(100vh-380px)] overflow-y-auto">
-                                    {mockErrors.map((error, index) => {
+                                    {filteredErrors.map((error, index) => {
                                         const iconConfig = error.severity === 'critical'
                                             ? {
                                                 icon: AlertCircle,
@@ -493,6 +568,49 @@ export default function DeclarationRisksTab() {
                         </div>
                     </div>
                 </>
+            )}
+
+            {/* Items List Section (New) */}
+            {activeTab === 'risks' && declaration?.items && declaration.items.length > 0 && (
+                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mt-6">
+                    <div className="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                            <Package className="w-5 h-5 text-gray-700" />
+                            <h3 className="font-bold text-gray-900 text-sm">Kalem Listesi</h3>
+                        </div>
+                        <span className="text-xs font-semibold text-gray-500 bg-white px-2 py-1 rounded border border-gray-200">
+                            {declaration.items.length} Kalem
+                        </span>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm text-gray-600">
+                            <thead className="bg-gray-50 text-xs uppercase font-semibold text-gray-700">
+                                <tr>
+                                    <th className="px-4 py-3">Kalem No</th>
+                                    <th className="px-4 py-3">GTİP</th>
+                                    <th className="px-4 py-3">Açıklama</th>
+                                    <th className="px-4 py-3 text-right">Fatura Tutarı</th>
+                                    <th className="px-4 py-3 text-right">İstatistiki Kıymet</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {declaration.items.map((item, idx) => (
+                                    <tr key={idx} className="hover:bg-gray-50 transition-colors">
+                                        <td className="px-4 py-3 font-medium text-gray-900">{item.itemNo}</td>
+                                        <td className="px-4 py-3 font-mono">{item.hsCode}</td>
+                                        <td className="px-4 py-3">{item.description || '-'}</td>
+                                        <td className="px-4 py-3 text-right font-medium">
+                                            {item.totalPrice?.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} {item.currency}
+                                        </td>
+                                        <td className="px-4 py-3 text-right text-gray-500">
+                                            {item.statisticalValue?.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             )}
 
             {activeTab === 'documents' && (

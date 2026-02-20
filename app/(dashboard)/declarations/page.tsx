@@ -1,7 +1,8 @@
 'use client';
 
+
 import React, { useState } from 'react';
-import { Segmented, Typography, Table, Input, Button, Tag, Dropdown, Space, Empty, Tooltip, Checkbox, Popover, Drawer, Divider, Spin, notification, Select, ConfigProvider, theme, DatePicker } from 'antd';
+import { Segmented, Typography, Table, Input, Button, Tag, Dropdown, Space, Empty, Tooltip, Checkbox, Popover, Drawer, Divider, Spin, notification, Select, ConfigProvider, theme, DatePicker, Avatar, Card, Row, Col } from 'antd';
 import {
     SearchOutlined,
     MoreOutlined,
@@ -15,15 +16,20 @@ import {
     FileTextOutlined,
     ClockCircleOutlined,
     FileSyncOutlined,
-    HistoryOutlined
+    HistoryOutlined,
+    ThunderboltOutlined,
+    SafetyCertificateOutlined,
+    ExclamationCircleOutlined,
+    CloseOutlined,
+    ArrowRightOutlined
 } from '@ant-design/icons';
 import { Timeline } from 'antd';
 import { useTheme } from '@/context/ThemeContext';
 import { useDashboard } from '@/context/DashboardContext';
 import type { ColumnsType } from 'antd/es/table';
-import { declarationsList, riskDetails } from '@/utils/mockData';
+import { declarationsList, riskDetails, b2cDeclarations } from '@/utils/mockData';
 import type { Declaration } from '@/utils/mockData';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import dayjs from 'dayjs';
 
 const { Title } = Typography;
@@ -38,6 +44,9 @@ interface Risk {
 
 const DeclarationList: React.FC = () => {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const initialTab = searchParams.get('tab') === 'B2C' ? 'B2C' : 'B2B';
+
     const { isDarkMode } = useTheme();
     const { setGlobalChecking } = useDashboard();
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
@@ -81,16 +90,14 @@ const DeclarationList: React.FC = () => {
         dateRange: null as [dayjs.Dayjs, dayjs.Dayjs] | null,
     });
 
-    const [activeSegment, setActiveSegment] = useState<'B2B' | 'B2C'>('B2B');
+
+
+    const [activeSegment, setActiveSegment] = useState<'B2B' | 'B2C'>(initialTab);
     const [senderSearchText, setSenderSearchText] = useState('');
     const [buyerSearchText, setBuyerSearchText] = useState('');
 
-    // B2C Mock Data (Simulated)
-    const b2cData: Declaration[] = [
-        { key: '901', no: 'TR-B2C-001', seller: 'Amazon EU', status: 'Completed', buyer: 'Ali Yılmaz', mlRisks: [], absoluteRisks: [], potentialRisks: [], intacDate: '2024-03-21', type: 'İthalat' },
-        { key: '902', no: 'TR-B2C-002', seller: 'AliExpress', status: 'Pending', buyer: 'Ayşe Demir', mlRisks: ['ML-101'], absoluteRisks: [], potentialRisks: ['Potansiyel Risk 1'], intacDate: '-', type: 'İthalat' },
-        { key: '903', no: 'TR-B2C-003', seller: 'Ebay Seller', status: 'Completed', buyer: 'Mehmet Kaya', mlRisks: [], absoluteRisks: [], potentialRisks: [], intacDate: '2024-03-23', type: 'İthalat' },
-    ];
+    // B2C Mock Data (Sourced from XML)
+    const b2cData = b2cDeclarations;
 
     // Filter Logic
     const currentDataSource = activeSegment === 'B2B' ? declarationsList : b2cData;
@@ -433,7 +440,13 @@ const DeclarationList: React.FC = () => {
                                 { label: 'B2C', value: 'B2C' }
                             ]}
                             value={activeSegment}
-                            onChange={(val) => setActiveSegment(val as 'B2B' | 'B2C')}
+                            onChange={(val) => {
+                                const newValue = val as 'B2B' | 'B2C';
+                                setActiveSegment(newValue);
+                                const params = new URLSearchParams(searchParams.toString());
+                                params.set('tab', newValue);
+                                router.replace(`?${params.toString()}`);
+                            }}
                             style={{ width: 'fit-content' }}
                         />
                     </ConfigProvider>
@@ -895,51 +908,135 @@ const DeclarationList: React.FC = () => {
                 </ConfigProvider>
 
                 <Drawer
-                    title={
-                        <div className="flex items-center gap-2">
-                            <WarningOutlined className="text-red-500" />
-                            <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>Risk Detayı</span>
-                        </div>
-                    }
+                    title={null}
                     placement="right"
                     onClose={() => setDrawerVisible(false)}
                     open={drawerVisible}
-                    width={500}
-                    headerStyle={{ backgroundColor: isDarkMode ? '#141414' : '#fff', borderBottom: isDarkMode ? '1px solid #303030' : '1px solid #f0f0f0' }}
-                    bodyStyle={{ backgroundColor: isDarkMode ? '#141414' : '#fff' }}
+                    width={480}
+                    closable={false}
+                    bodyStyle={{ padding: 0, height: '100%', backgroundColor: isDarkMode ? '#141414' : '#fff' }}
                 >
                     {selectedRiskDetail ? (
-                        <div className="flex flex-col gap-6">
-                            <div className={`p-4 rounded border ${isDarkMode ? 'bg-[#450a0a] border-[#7f1d1d]' : 'bg-red-50 border-red-100'}`}>
-                                <h3 className={`text-lg font-bold m-0 ${isDarkMode ? 'text-red-300' : 'text-red-700'}`}>{selectedRiskDetail.code}</h3>
-                                <span className={isDarkMode ? 'text-red-400' : 'text-red-500'}>{selectedRiskDetail.subject}</span>
-                            </div>
-
-                            <Divider className={`my-0 ${isDarkMode ? 'border-[#303030]' : ''}`} />
-
-                            <div>
-                                <h4 className={`font-semibold mb-2 flex items-center gap-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                                    <InfoCircleOutlined /> Detay Açıklama
-                                </h4>
-                                <p className={`leading-relaxed p-3 rounded ${isDarkMode ? 'bg-[#1f1f1f] text-gray-400' : 'bg-gray-50 text-gray-600'}`}>
-                                    {selectedRiskDetail.details}
+                        <div className="flex flex-col h-full">
+                            {/* Header Section */}
+                            <div className={`p-6 border-b ${isDarkMode ? 'border-[#303030]' : 'border-gray-100'}`}>
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className={`p-3 rounded-xl ${selectedRiskDetail.code.includes('red') || selectedRiskDetail.code.includes('Mutlak')
+                                        ? 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400'
+                                        : selectedRiskDetail.code.includes('pot') || selectedRiskDetail.code.includes('Potansiyel')
+                                            ? 'bg-orange-50 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400'
+                                            : 'bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400'
+                                        }`}>
+                                        {selectedRiskDetail.code.includes('red') || selectedRiskDetail.code.includes('Mutlak') ? (
+                                            <WarningOutlined className="text-2xl" />
+                                        ) : selectedRiskDetail.code.includes('pot') || selectedRiskDetail.code.includes('Potansiyel') ? (
+                                            <ExclamationCircleOutlined className="text-2xl" />
+                                        ) : (
+                                            <ThunderboltOutlined className="text-2xl" />
+                                        )}
+                                    </div>
+                                    <Button
+                                        type="text"
+                                        icon={<CloseOutlined />}
+                                        onClick={() => setDrawerVisible(false)}
+                                        className={isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-400 hover:text-gray-600'}
+                                    />
+                                </div>
+                                <h2 className={`text-2xl font-bold mb-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                                    {selectedRiskDetail.code.split(' - ')[0]}
+                                </h2>
+                                <p className={`text-base ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                    {selectedRiskDetail.subject}
                                 </p>
                             </div>
 
-                            <div>
-                                <h4 className={`font-semibold mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>İlgili Kalem</h4>
-                                <Tag color="blue" className="text-sm py-1 px-3">
-                                    {selectedRiskDetail.relatedItem}
-                                </Tag>
+                            {/* Content Section */}
+                            <div className="flex-1 overflow-y-auto p-6">
+                                <div className="space-y-6">
+                                    {/* Risk Card Info */}
+                                    <div className={`p-4 rounded-xl border ${isDarkMode ? 'bg-[#1f1f1f] border-[#303030]' : 'bg-gray-50 border-gray-100'}`}>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <span className={`text-xs font-semibold uppercase tracking-wider block mb-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                                    RİSK KODU
+                                                </span>
+                                                <span className={`font-mono font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                                    {selectedRiskDetail.code.split(' - ')[1] || selectedRiskDetail.code}
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <span className={`text-xs font-semibold uppercase tracking-wider block mb-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                                    ŞİDDET DÜZEYİ
+                                                </span>
+                                                <Tag
+                                                    color={
+                                                        selectedRiskDetail.code.includes('red') || selectedRiskDetail.code.includes('Mutlak') ? 'red' :
+                                                            selectedRiskDetail.code.includes('pot') || selectedRiskDetail.code.includes('Potansiyel') ? 'orange' : 'purple'
+                                                    }
+                                                    className="m-0 border-0 px-2 py-0.5"
+                                                >
+                                                    {selectedRiskDetail.code.includes('red') || selectedRiskDetail.code.includes('Mutlak') ? 'Yüksek' :
+                                                        selectedRiskDetail.code.includes('pot') || selectedRiskDetail.code.includes('Potansiyel') ? 'Orta' : 'Düşük'}
+                                                </Tag>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Description */}
+                                    <div>
+                                        <h3 className={`text-sm font-bold mb-3 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                                            <FileTextOutlined className="text-blue-500" />
+                                            Detay Açıklama
+                                        </h3>
+                                        <p className={`text-base leading-relaxed ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                                            {selectedRiskDetail.details}
+                                        </p>
+                                    </div>
+
+                                    {/* Related Item */}
+                                    <div>
+                                        <h3 className={`text-sm font-bold mb-3 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                                            <SafetyCertificateOutlined className="text-emerald-500" />
+                                            Etkilenen Kalem
+                                        </h3>
+                                        <div className={`p-3 rounded-lg border ${isDarkMode ? 'bg-[#1f1f1f] border-[#303030]' : 'bg-white border-gray-200'}`}>
+                                            <div className="flex items-center gap-3">
+                                                <div className={`p-2 rounded bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400`}>
+                                                    <FileSyncOutlined />
+                                                </div>
+                                                <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                                                    {selectedRiskDetail.relatedItem}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Suggestion Section (Optional - Mocked for visual) */}
+                                    <div className={`p-4 rounded-xl border border-dashed ${isDarkMode ? 'border-gray-700 bg-[#1a1a1a]' : 'border-gray-300 bg-gray-50'}`}>
+                                        <h4 className={`text-xs font-bold uppercase mb-2 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                            ÖNERİLEN AKSİYON
+                                        </h4>
+                                        <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                            Lütfen ilgili kalemin GTİP kodunu ve menşe şahadetnamesini kontrol ediniz. Uyumsuzluk durumunda gümrük müşavirinizle iletişime geçiniz.
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div className="mt-auto pt-8">
-                                <Button type="primary" className={`w-full h-10 ${isDarkMode ? 'bg-white text-black' : 'bg-black'}`} onClick={() => setDrawerVisible(false)}>
-                                    Anlaşıldı, Kapat
+                            {/* Footer Section */}
+                            <div className={`p-6 border-t ${isDarkMode ? 'border-[#303030]' : 'border-gray-100'}`}>
+                                <Button
+                                    type="primary"
+                                    size="large"
+                                    block
+                                    icon={<ArrowRightOutlined />}
+                                    onClick={() => setDrawerVisible(false)}
+                                    className={`${isDarkMode ? 'bg-white text-black hover:bg-gray-200' : 'bg-black hover:bg-gray-800'}`}
+                                >
+                                    Anlaşıldı
                                 </Button>
                             </div>
                         </div>
-
                     ) : <Empty description="Risk detayı bulunamadı" />}
                 </Drawer>
 

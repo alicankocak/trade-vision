@@ -43,6 +43,19 @@ export interface ExtendedDeclaration {
     shippingInsurance: ShippingInsurance[];
     paidTaxes: Tax[];
     items: DeclarationItem[];
+    // Intersecting fields from Declaration
+    regime?: string;
+    paymentMethod?: string;
+    incoterm?: string;
+    // B2C Specific Fields
+    waybillNo?: string;
+    grossWeight?: number;
+    netWeight?: number;
+    packageCount?: number;
+    marketplace?: string;
+    totalTax?: number;
+    no?: string;
+    type?: string;
 }
 
 export const mockDeclarations: ExtendedDeclaration[] = [
