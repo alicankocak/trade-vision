@@ -1,27 +1,25 @@
 'use client';
 
 
-import React, { useState } from 'react';
-import { Segmented, Typography, Table, Input, Button, Tag, Dropdown, Space, Empty, Tooltip, Checkbox, Popover, Drawer, Divider, Spin, notification, Select, ConfigProvider, theme, DatePicker, Avatar, Card, Row, Col } from 'antd';
+import React, { useState, Suspense } from 'react';
+import { Segmented, Typography, Table, Input, Button, Tag, Space, Empty, Tooltip, Drawer, notification, Select, ConfigProvider, theme, DatePicker, Row, Col } from 'antd';
 import {
     SearchOutlined,
-    MoreOutlined,
     FilterOutlined,
     ExportOutlined,
     EyeOutlined,
     WarningOutlined,
     InfoCircleOutlined,
-    SyncOutlined,
     CheckCircleOutlined,
     FileTextOutlined,
     ClockCircleOutlined,
-    FileSyncOutlined,
     HistoryOutlined,
     ThunderboltOutlined,
-    SafetyCertificateOutlined,
     ExclamationCircleOutlined,
     CloseOutlined,
-    ArrowRightOutlined
+    ArrowRightOutlined,
+    FileSyncOutlined,
+    SafetyCertificateOutlined
 } from '@ant-design/icons';
 import { Timeline } from 'antd';
 import { useTheme } from '@/context/ThemeContext';
@@ -31,6 +29,8 @@ import { declarationsList, riskDetails, b2cDeclarations } from '@/utils/mockData
 import type { Declaration } from '@/utils/mockData';
 import { useRouter, useSearchParams } from 'next/navigation';
 import dayjs from 'dayjs';
+
+export const dynamic = 'force-dynamic';
 
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
@@ -42,7 +42,7 @@ interface Risk {
     relatedItem: string;
 }
 
-const DeclarationList: React.FC = () => {
+const DeclarationsContent: React.FC = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const initialTab = searchParams.get('tab') === 'B2C' ? 'B2C' : 'B2B';
@@ -59,12 +59,11 @@ const DeclarationList: React.FC = () => {
         setTimeout(() => {
             setIsChecking(false);
             notification.success({
-                message: 'Statü Güncellendi', // Updated message
-                description: 'Seçilen beyannamelerin statüleri başarıyla güncellendi.', // Updated description
+                message: 'Statü Güncellendi',
+                description: 'Seçilen beyannamelerin statüleri başarıyla güncellendi.',
                 placement: 'topRight'
-                // Removed style object
             });
-        }, 2000); // Changed timeout duration
+        }, 2000);
     };
 
     // Drawer State
@@ -123,27 +122,7 @@ const DeclarationList: React.FC = () => {
 
         const matchesYearFilter = !columnFilters.year ? true :
             item.intacDate !== '-' && item.intacDate.split('.').length === 3 ? item.intacDate.split('.')[2] === columnFilters.year :
-                // Fallback to mock 'date' if intacDate is not set or parsed, assuming 'date' field format YYYY-MM-DD
-                // Actually item.date is available in ExtendedDeclaration but not clearly on Declaration in mockData list, 
-                // but we added it to interface. Let's check availability.
-                // declarationsList items don't strictly have 'date' in the original list, but I see I added it to declarationsList.
-                // Wait, I strictly added `date` to Declaration interface but did NOT add `date` to declarationsList items?
-                // I checked my previous edit to mockData.ts. I added regime, paymentMethod, incoterm.
-                // I did NOT add `date` to declarationsList. I missed that despite saying I would.
-                // However, `intacDate` exists. And there is a `date` field in `ExtendedDeclaration`. 
-                // The table uses `declarationsList` which is `Declaration[]`.
-                // Let's rely on `intacDate` for now or better, I should have added `date` to declarationsList.
-                // Actually, the user asked for "Yıl (2024,2025,2026)". 
-                // Start by checking `intacDate` (DD.MM.YYYY).
-                true; // Placeholder until I fix data or logic.
-
-        // Wait, I need to fix the Year filter logic properly. 
-        // Let's assume we filter based on `intacDate` year if available, or just ignore if not?
-        // Or maybe filter based on the invisible `date` field if I add it?
-        // The prompt asked for "Yıl". Usually refers to Declaration Date.
-        // `declarationsList` items have `intacDate`.
-        // Let's look at `b2cData` - it has `intacDate`.
-        // I will implement Year filter extracting from `intacDate` for now as it's the visible search date.
+                true;
 
         let matchesYear = true;
         if (columnFilters.year) {
@@ -258,7 +237,7 @@ const DeclarationList: React.FC = () => {
             dataIndex: 'no',
             key: 'no',
             sorter: (a, b) => a.no.localeCompare(b.no),
-            render: (text) => <span className={`font-semibold ${isDarkMode ? 'text-white' : ''}`}>{text}</span>,
+            render: (text) => <span className={`font-semibold ${isDarkMode ? 'text-white' : 'text-[#262626]'}`}>{text}</span>,
         },
         {
             title: 'Gönderici Adı',
@@ -266,7 +245,7 @@ const DeclarationList: React.FC = () => {
             key: 'seller',
             width: 200,
             sorter: (a, b) => a.seller.localeCompare(b.seller),
-            render: (text) => <span className={isDarkMode ? 'text-gray-300' : ''}>{text}</span>,
+            render: (text) => <span className={isDarkMode ? 'text-gray-300' : 'text-[#262626]'}>{text}</span>,
         },
         {
             title: 'Alıcı Adı',
@@ -274,7 +253,7 @@ const DeclarationList: React.FC = () => {
             key: 'buyer',
             width: 200,
             sorter: (a, b) => a.buyer.localeCompare(b.buyer),
-            render: (text) => <span className={isDarkMode ? 'text-gray-300' : ''}>{text}</span>,
+            render: (text) => <span className={isDarkMode ? 'text-gray-300' : 'text-[#262626]'}>{text}</span>,
         },
         {
             title: 'Mutlak Risk',
@@ -318,7 +297,7 @@ const DeclarationList: React.FC = () => {
             key: 'type',
             width: 150,
             render: (text) => (
-                <span className={`px-2 py-1 rounded text-xs font-medium ${isDarkMode ? 'bg-[#303030] text-gray-300' : 'bg-gray-100 text-[#262626]'}`}>
+                <span className={`px-2 py-1 rounded text-xs font-medium ${isDarkMode ? 'bg-[#303030] text-gray-300' : 'bg-[#f5f5f5] text-[#262626]'}`}>
                     {text}
                 </span>
             ),
@@ -336,7 +315,7 @@ const DeclarationList: React.FC = () => {
                 text === '-' ? (
                     <Tag color="error" className="m-0">İntaç tarihi almadı</Tag>
                 ) : (
-                    <Tag className={`m-0 ${isDarkMode ? 'bg-[#303030] text-gray-300 border-[#424242]' : 'bg-gray-100 text-gray-600 border-gray-200'}`}>
+                    <Tag className={`m-0 ${isDarkMode ? 'bg-[#303030] text-gray-300 border-[#424242]' : 'bg-[#f5f5f5] text-[#262626] border-[#d9d9d9]'}`}>
                         {text}
                     </Tag>
                 )
@@ -357,7 +336,7 @@ const DeclarationList: React.FC = () => {
                                 e.stopPropagation();
                                 router.push(`/declarations/${record.key}`);
                             }}
-                            className={isDarkMode ? 'hover:bg-[#303030] text-white' : 'bg-gray-50 hover:bg-black hover:text-white transition-colors'}
+                            className={isDarkMode ? 'hover:bg-[#303030] text-white' : 'bg-transparent hover:bg-gray-100 text-[#262626] transition-colors'}
                         />
                     </Tooltip>
 
@@ -371,7 +350,7 @@ const DeclarationList: React.FC = () => {
                                 setSelectedHistoryRecord(record);
                                 setHistoryDrawerVisible(true);
                             }}
-                            className={isDarkMode ? 'hover:bg-[#303030] text-white' : 'bg-gray-50 hover:bg-black hover:text-white transition-colors'}
+                            className={isDarkMode ? 'hover:bg-[#303030] text-white' : 'bg-transparent hover:bg-gray-100 text-[#262626] transition-colors'}
                         />
                     </Tooltip>
                 </div>
@@ -390,7 +369,7 @@ const DeclarationList: React.FC = () => {
 
         return (
             <div className="pl-4 py-2 flex gap-4">
-                <span className={`font-semibold ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Risk Detayları:</span>
+                <span className={`font-semibold ${isDarkMode ? 'text-gray-400' : 'text-[#262626]'}`}>Risk Detayları:</span>
                 <Space>
                     {allRisks.map((risk, index) => (
                         <Tag
@@ -407,18 +386,18 @@ const DeclarationList: React.FC = () => {
         );
     };
 
-    const searchBg = isDarkMode ? '#141414' : '#fff';
-    const searchBorder = isDarkMode ? '#303030' : '#E3E3E7'; // Updated border color
+    const searchBg = isDarkMode ? '#141414' : '#ffffff';
+    const searchBorder = isDarkMode ? '#303030' : '#d9d9d9';
 
     return (
-        <div className={`min-h-screen p-6 ${isDarkMode ? 'bg-black' : 'bg-[#fcfcfc]'}`}>
-            <div className="flex flex-col gap-6"> {/* Removed p-1, increased gap */}
+        <div className={`min-h-screen p-6 ${isDarkMode ? 'bg-black' : 'bg-[#fafafa]'}`}>
+            <div className="flex flex-col gap-6">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
-                        <Title level={4} style={{ margin: 0, color: isDarkMode ? 'white' : 'black' }}>
+                        <Title level={4} style={{ margin: 0, color: isDarkMode ? 'white' : '#262626' }}>
                             Beyanname Listesi
                         </Title>
-                        <span className={isDarkMode ? 'text-gray-400' : 'text-gray-500'}>Tüm ithalat ve ihracat beyannamelerinizi buradan yönetin.</span>
+                        <span className={isDarkMode ? 'text-gray-400' : 'text-[#262626] opacity-70'}>Tüm ithalat ve ihracat beyannamelerinizi buradan yönetin.</span>
                     </div>
                 </div>
 
@@ -427,7 +406,7 @@ const DeclarationList: React.FC = () => {
                         theme={{
                             components: {
                                 Segmented: {
-                                    itemSelectedBg: isDarkMode ? '#ffffff' : '#000000',
+                                    itemSelectedBg: isDarkMode ? '#ffffff' : '#262626',
                                     itemSelectedColor: isDarkMode ? '#000000' : '#ffffff',
                                     trackBg: isDarkMode ? '#1f1f1f' : '#ebebeb',
                                 }
@@ -454,39 +433,39 @@ const DeclarationList: React.FC = () => {
 
                 <div className={`grid grid-cols-1 md:grid-cols-5 gap-4`}>
                     {/* Card 1: Toplam Beyanname */}
-                    <div className={`p-4 rounded-[16px] border shadow-sm relative overflow-hidden transition-all duration-300 flex justify-between items-start ${isDarkMode ? 'bg-[#1f1f1f] border-[#303030]' : 'bg-white border-[#E3E3E7]'}`}>
+                    <div className={`p-4 rounded-[16px] border shadow-sm relative overflow-hidden transition-all duration-300 flex justify-between items-start ${isDarkMode ? 'bg-[#1f1f1f] border-[#303030]' : 'bg-white border-[#d9d9d9]'}`}>
                         <div className="flex flex-col justify-between h-full z-10">
                             <div>
-                                <span className={`text-[30px] font-bold block ${isDarkMode ? 'text-white' : 'text-[#333335]'}`}>{totalDeclarations}</span>
-                                <span className={`text-[14px] font-normal tracking-wide mt-1 block opacity-70 ${isDarkMode ? 'text-gray-400' : 'text-[#333335]'}`}>Toplam Beyanname</span>
+                                <span className={`text-[30px] font-bold block ${isDarkMode ? 'text-white' : 'text-[#262626]'}`}>{totalDeclarations}</span>
+                                <span className={`text-[14px] font-normal tracking-wide mt-1 block opacity-70 ${isDarkMode ? 'text-gray-400' : 'text-[#262626]'}`}>Toplam Beyanname</span>
                             </div>
                             <div className="mt-4 flex items-center gap-2">
                                 <span className="text-[14px] font-medium text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded flex items-center gap-1">
                                     +12.5%
                                 </span>
-                                <span className={`text-[14px] opacity-60 ${isDarkMode ? 'text-gray-400' : 'text-[#333335]'}`}>bu hafta</span>
+                                <span className={`text-[14px] opacity-60 ${isDarkMode ? 'text-gray-400' : 'text-[#262626]'}`}>bu hafta</span>
                             </div>
                         </div>
-                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0 ${isDarkMode ? 'bg-cyan-500/20 text-cyan-400' : 'bg-gray-100 text-[#333335]'}`}>
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0 ${isDarkMode ? 'bg-cyan-500/20 text-cyan-400' : 'bg-gray-100 text-[#262626]'}`}>
                             <FileTextOutlined />
                         </div>
                     </div>
 
                     {/* Card 2: Mutlak Risk */}
-                    <div className={`p-4 rounded-[16px] border shadow-sm relative overflow-hidden transition-all duration-300 flex justify-between items-start ${isDarkMode ? 'bg-[#1f1f1f] border-[#303030]' : 'bg-white border-[#E3E3E7]'}`}>
+                    <div className={`p-4 rounded-[16px] border shadow-sm relative overflow-hidden transition-all duration-300 flex justify-between items-start ${isDarkMode ? 'bg-[#1f1f1f] border-[#303030]' : 'bg-white border-[#d9d9d9]'}`}>
                         <div className="flex flex-col justify-between h-full z-10">
                             <div>
-                                <span className={`text-[30px] font-bold block ${isDarkMode ? 'text-white' : 'text-[#333335]'}`}>{totalAbsoluteRisk}</span>
-                                <span className={`text-[14px] font-normal tracking-wide mt-1 block opacity-70 ${isDarkMode ? 'text-gray-400' : 'text-[#333335]'}`}>Mutlak Risk</span>
+                                <span className={`text-[30px] font-bold block ${isDarkMode ? 'text-white' : 'text-[#262626]'}`}>{totalAbsoluteRisk}</span>
+                                <span className={`text-[14px] font-normal tracking-wide mt-1 block opacity-70 ${isDarkMode ? 'text-gray-400' : 'text-[#262626]'}`}>Mutlak Risk</span>
                             </div>
                             <div className="mt-4 flex flex-col gap-1">
                                 <div className="flex items-center gap-2">
                                     <span className="text-[14px] font-medium text-rose-500 bg-rose-500/10 px-1.5 py-0.5 rounded flex items-center gap-1">
                                         +2.1%
                                     </span>
-                                    <span className={`text-[14px] opacity-60 ${isDarkMode ? 'text-gray-400' : 'text-[#333335]'}`}>geçen aya göre</span>
+                                    <span className={`text-[14px] opacity-60 ${isDarkMode ? 'text-gray-400' : 'text-[#262626]'}`}>geçen aya göre</span>
                                 </div>
-                                <span className={`text-[14px] font-medium mt-1 ${isDarkMode ? 'text-gray-400' : 'text-[#333335]'}`}>
+                                <span className={`text-[14px] font-medium mt-1 ${isDarkMode ? 'text-gray-400' : 'text-[#262626]'}`}>
                                     Bulgu sayısı: 12
                                 </span>
                             </div>
@@ -497,20 +476,20 @@ const DeclarationList: React.FC = () => {
                     </div>
 
                     {/* Card 3: Potansiyel Risk */}
-                    <div className={`p-4 rounded-[16px] border shadow-sm relative overflow-hidden transition-all duration-300 flex justify-between items-start ${isDarkMode ? 'bg-[#1f1f1f] border-[#303030]' : 'bg-white border-[#E3E3E7]'}`}>
+                    <div className={`p-4 rounded-[16px] border shadow-sm relative overflow-hidden transition-all duration-300 flex justify-between items-start ${isDarkMode ? 'bg-[#1f1f1f] border-[#303030]' : 'bg-white border-[#d9d9d9]'}`}>
                         <div className="flex flex-col justify-between h-full z-10">
                             <div>
-                                <span className={`text-[30px] font-bold block ${isDarkMode ? 'text-white' : 'text-[#333335]'}`}>{totalPotentialRisk}</span>
-                                <span className={`text-[14px] font-normal tracking-wide mt-1 block opacity-70 ${isDarkMode ? 'text-gray-400' : 'text-[#333335]'}`}>Potansiyel Risk</span>
+                                <span className={`text-[30px] font-bold block ${isDarkMode ? 'text-white' : 'text-[#262626]'}`}>{totalPotentialRisk}</span>
+                                <span className={`text-[14px] font-normal tracking-wide mt-1 block opacity-70 ${isDarkMode ? 'text-gray-400' : 'text-[#262626]'}`}>Potansiyel Risk</span>
                             </div>
                             <div className="mt-4 flex flex-col gap-1">
                                 <div className="flex items-center gap-2">
                                     <span className="text-[14px] font-medium text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded flex items-center gap-1">
                                         -5.4%
                                     </span>
-                                    <span className={`text-[14px] opacity-60 ${isDarkMode ? 'text-gray-400' : 'text-[#333335]'}`}>bu hafta</span>
+                                    <span className={`text-[14px] opacity-60 ${isDarkMode ? 'text-gray-400' : 'text-[#262626]'}`}>bu hafta</span>
                                 </div>
-                                <span className={`text-[14px] font-medium mt-1 ${isDarkMode ? 'text-gray-400' : 'text-[#333335]'}`}>
+                                <span className={`text-[14px] font-medium mt-1 ${isDarkMode ? 'text-gray-400' : 'text-[#262626]'}`}>
                                     Bulgu sayısı: 45
                                 </span>
                             </div>
@@ -521,20 +500,20 @@ const DeclarationList: React.FC = () => {
                     </div>
 
                     {/* Card 4: AI & ML Bulgusu */}
-                    <div className={`p-4 rounded-[16px] border shadow-sm relative overflow-hidden transition-all duration-300 flex justify-between items-start ${isDarkMode ? 'bg-[#1f1f1f] border-[#303030]' : 'bg-white border-[#E3E3E7]'}`}>
+                    <div className={`p-4 rounded-[16px] border shadow-sm relative overflow-hidden transition-all duration-300 flex justify-between items-start ${isDarkMode ? 'bg-[#1f1f1f] border-[#303030]' : 'bg-white border-[#d9d9d9]'}`}>
                         <div className="flex flex-col justify-between h-full z-10">
                             <div>
-                                <span className={`text-[30px] font-bold block ${isDarkMode ? 'text-white' : 'text-[#333335]'}`}>{totalMLRisk}</span>
-                                <span className={`text-[14px] font-normal tracking-wide mt-1 block opacity-70 ${isDarkMode ? 'text-gray-400' : 'text-[#333335]'}`}>AI & ML Bulgusu</span>
+                                <span className={`text-[30px] font-bold block ${isDarkMode ? 'text-white' : 'text-[#262626]'}`}>{totalMLRisk}</span>
+                                <span className={`text-[14px] font-normal tracking-wide mt-1 block opacity-70 ${isDarkMode ? 'text-gray-400' : 'text-[#262626]'}`}>AI & ML Bulgusu</span>
                             </div>
                             <div className="mt-4 flex flex-col gap-1">
                                 <div className="flex items-center gap-2">
                                     <span className="text-[14px] font-medium text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded flex items-center gap-1">
                                         +18.2%
                                     </span>
-                                    <span className={`text-[14px] opacity-60 ${isDarkMode ? 'text-gray-400' : 'text-[#333335]'}`}>yeni model ile</span>
+                                    <span className={`text-[14px] opacity-60 ${isDarkMode ? 'text-gray-400' : 'text-[#262626]'}`}>yeni model ile</span>
                                 </div>
-                                <span className={`text-[14px] font-medium mt-1 ${isDarkMode ? 'text-gray-400' : 'text-[#333335]'}`}>
+                                <span className={`text-[14px] font-medium mt-1 ${isDarkMode ? 'text-gray-400' : 'text-[#262626]'}`}>
                                     Bulgu sayısı: 8
                                 </span>
                             </div>
@@ -545,17 +524,17 @@ const DeclarationList: React.FC = () => {
                     </div>
 
                     {/* Card 5: İntaç Bekleyen */}
-                    <div className={`p-4 rounded-[16px] border shadow-sm relative overflow-hidden transition-all duration-300 flex justify-between items-start ${isDarkMode ? 'bg-[#1f1f1f] border-[#303030]' : 'bg-white border-[#E3E3E7]'}`}>
+                    <div className={`p-4 rounded-[16px] border shadow-sm relative overflow-hidden transition-all duration-300 flex justify-between items-start ${isDarkMode ? 'bg-[#1f1f1f] border-[#303030]' : 'bg-white border-[#d9d9d9]'}`}>
                         <div className="flex flex-col justify-between h-full z-10">
                             <div>
-                                <span className={`text-[30px] font-bold block ${isDarkMode ? 'text-white' : 'text-[#333335]'}`}>{totalPendingIntac}</span>
-                                <span className={`text-[14px] font-normal tracking-wide mt-1 block opacity-70 ${isDarkMode ? 'text-gray-400' : 'text-[#333335]'}`}>İntaç Bekleyen</span>
+                                <span className={`text-[30px] font-bold block ${isDarkMode ? 'text-white' : 'text-[#262626]'}`}>{totalPendingIntac}</span>
+                                <span className={`text-[14px] font-normal tracking-wide mt-1 block opacity-70 ${isDarkMode ? 'text-gray-400' : 'text-[#262626]'}`}>İntaç Bekleyen</span>
                             </div>
                             <div className="mt-4 flex items-center gap-2">
                                 <span className="text-[14px] font-medium text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded flex items-center gap-1">
                                     ~1.2%
                                 </span>
-                                <span className={`text-[14px] opacity-60 ${isDarkMode ? 'text-gray-400' : 'text-[#333335]'}`}>sabit seyir</span>
+                                <span className={`text-[14px] opacity-60 ${isDarkMode ? 'text-gray-400' : 'text-[#262626]'}`}>sabit seyir</span>
                             </div>
                         </div>
                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0 ${isDarkMode ? 'bg-emerald-500/20 text-emerald-400' : 'bg-green-50 text-green-600'}`}>
@@ -658,7 +637,7 @@ const DeclarationList: React.FC = () => {
                             <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pt-4 border-t ${isDarkMode ? 'border-[#303030]' : 'border-gray-100'}`}>
                                 {/* 1. Regime Filter */}
                                 <div className="flex flex-col gap-1">
-                                    <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Rejim</span>
+                                    <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-[#262626]'}`}>Rejim</span>
                                     <Select
                                         placeholder="Seçiniz"
                                         allowClear
@@ -679,7 +658,7 @@ const DeclarationList: React.FC = () => {
 
                                 {/* 2. Year Filter */}
                                 <div className="flex flex-col gap-1">
-                                    <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Yıl</span>
+                                    <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-[#262626]'}`}>Yıl</span>
                                     <Select
                                         placeholder="Seçiniz"
                                         allowClear
@@ -697,7 +676,7 @@ const DeclarationList: React.FC = () => {
 
                                 {/* 3. Payment Method Filter */}
                                 <div className="flex flex-col gap-1">
-                                    <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Ödeme Şekli</span>
+                                    <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-[#262626]'}`}>Ödeme Şekli</span>
                                     <Select
                                         placeholder="Seçiniz"
                                         allowClear
@@ -713,7 +692,7 @@ const DeclarationList: React.FC = () => {
 
                                 {/* 4. Incoterm Filter */}
                                 <div className="flex flex-col gap-1">
-                                    <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Incoterm</span>
+                                    <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-[#262626]'}`}>Incoterm</span>
                                     <Select
                                         placeholder="Seçiniz"
                                         allowClear
@@ -735,7 +714,7 @@ const DeclarationList: React.FC = () => {
 
                                 {/* 5. Date Range Filter */}
                                 <div className="flex flex-col gap-1">
-                                    <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Tarih Aralığı</span>
+                                    <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-[#262626]'}`}>Tarih Aralığı</span>
                                     <RangePicker
                                         className="w-full"
                                         value={columnFilters.dateRange}
@@ -746,7 +725,7 @@ const DeclarationList: React.FC = () => {
 
                                 {/* 6. Absolute Risk Codes Filter */}
                                 <div className="flex flex-col gap-1">
-                                    <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Mutlak Riskler</span>
+                                    <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-[#262626]'}`}>Mutlak Riskler</span>
                                     <Select
                                         mode="multiple"
                                         placeholder="Seçiniz"
@@ -762,7 +741,7 @@ const DeclarationList: React.FC = () => {
 
                                 {/* 7. Potential Risk Codes Filter */}
                                 <div className="flex flex-col gap-1">
-                                    <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Potansiyel Riskler</span>
+                                    <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-[#262626]'}`}>Potansiyel Riskler</span>
                                     <Select
                                         mode="multiple"
                                         placeholder="Seçiniz"
@@ -778,7 +757,7 @@ const DeclarationList: React.FC = () => {
 
                                 {/* 8. ML Risk Codes Filter */}
                                 <div className="flex flex-col gap-1">
-                                    <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>AI-ML Bulguları</span>
+                                    <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-[#262626]'}`}>AI-ML Bulguları</span>
                                     <Select
                                         mode="multiple"
                                         placeholder="Seçiniz"
@@ -794,7 +773,7 @@ const DeclarationList: React.FC = () => {
 
                                 {/* 9. Sender Filter */}
                                 <div className="flex flex-col gap-1">
-                                    <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Gönderici</span>
+                                    <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-[#262626]'}`}>Gönderici</span>
                                     <Select
                                         placeholder="Seçiniz"
                                         allowClear
@@ -808,7 +787,7 @@ const DeclarationList: React.FC = () => {
 
                                 {/* 10. Buyer Filter */}
                                 <div className="flex flex-col gap-1">
-                                    <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Alıcı</span>
+                                    <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-[#262626]'}`}>Alıcı</span>
                                     <Select
                                         placeholder="Seçiniz"
                                         allowClear
@@ -822,7 +801,7 @@ const DeclarationList: React.FC = () => {
 
                                 {/* 11. Intac Status Filter */}
                                 <div className="flex flex-col gap-1">
-                                    <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>İntaç Durumu</span>
+                                    <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-[#262626]'}`}>İntaç Durumu</span>
                                     <Select
                                         placeholder="Seçiniz"
                                         allowClear
@@ -839,7 +818,7 @@ const DeclarationList: React.FC = () => {
 
                                 {/* 12. Declaration Type Filter */}
                                 <div className="flex flex-col gap-1">
-                                    <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Beyanname Türü</span>
+                                    <span className={`text-xs font-medium ml-1 ${isDarkMode ? 'text-gray-400' : 'text-[#262626]'}`}>Beyanname Türü</span>
                                     <Select
                                         placeholder="Seçiniz"
                                         className="w-full"
@@ -870,7 +849,7 @@ const DeclarationList: React.FC = () => {
                         }
                     }}
                 >
-                    <div className={`rounded-[16px] border shadow-sm overflow-hidden transition-colors duration-200 ${isDarkMode ? 'border-[#303030]' : 'border-[#E3E3E7]'}`}
+                    <div className={`rounded-[16px] border shadow-sm overflow-hidden transition-colors duration-200 ${isDarkMode ? 'border-[#303030]' : 'border-[#d9d9d9]'}`}
                         style={{ backgroundColor: searchBg }}
                     >
                         <Table
@@ -939,10 +918,10 @@ const DeclarationList: React.FC = () => {
                                         type="text"
                                         icon={<CloseOutlined />}
                                         onClick={() => setDrawerVisible(false)}
-                                        className={isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-400 hover:text-gray-600'}
+                                        className={isDarkMode ? 'text-gray-400 hover:text-white' : 'text-[#262626] hover:text-gray-600'}
                                     />
                                 </div>
-                                <h2 className={`text-2xl font-bold mb-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                                <h2 className={`text-2xl font-bold mb-1 ${isDarkMode ? 'text-white' : 'text-[#262626]'}`}>
                                     {selectedRiskDetail.code.split(' - ')[0]}
                                 </h2>
                                 <p className={`text-base ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -957,15 +936,15 @@ const DeclarationList: React.FC = () => {
                                     <div className={`p-4 rounded-xl border ${isDarkMode ? 'bg-[#1f1f1f] border-[#303030]' : 'bg-gray-50 border-gray-100'}`}>
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <span className={`text-xs font-semibold uppercase tracking-wider block mb-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                                <span className={`text-xs font-semibold uppercase tracking-wider block mb-1 ${isDarkMode ? 'text-gray-500' : 'text-[#262626] opacity-60'}`}>
                                                     RİSK KODU
                                                 </span>
-                                                <span className={`font-mono font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                                <span className={`font-mono font-medium ${isDarkMode ? 'text-gray-300' : 'text-[#262626]'}`}>
                                                     {selectedRiskDetail.code.split(' - ')[1] || selectedRiskDetail.code}
                                                 </span>
                                             </div>
                                             <div>
-                                                <span className={`text-xs font-semibold uppercase tracking-wider block mb-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                                <span className={`text-xs font-semibold uppercase tracking-wider block mb-1 ${isDarkMode ? 'text-gray-500' : 'text-[#262626] opacity-60'}`}>
                                                     ŞİDDET DÜZEYİ
                                                 </span>
                                                 <Tag
@@ -984,7 +963,7 @@ const DeclarationList: React.FC = () => {
 
                                     {/* Description */}
                                     <div>
-                                        <h3 className={`text-sm font-bold mb-3 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                                        <h3 className={`text-sm font-bold mb-3 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-[#262626]'}`}>
                                             <FileTextOutlined className="text-blue-500" />
                                             Detay Açıklama
                                         </h3>
@@ -995,7 +974,7 @@ const DeclarationList: React.FC = () => {
 
                                     {/* Related Item */}
                                     <div>
-                                        <h3 className={`text-sm font-bold mb-3 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                                        <h3 className={`text-sm font-bold mb-3 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-[#262626]'}`}>
                                             <SafetyCertificateOutlined className="text-emerald-500" />
                                             Etkilenen Kalem
                                         </h3>
@@ -1004,7 +983,7 @@ const DeclarationList: React.FC = () => {
                                                 <div className={`p-2 rounded bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400`}>
                                                     <FileSyncOutlined />
                                                 </div>
-                                                <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                                                <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-[#262626]'}`}>
                                                     {selectedRiskDetail.relatedItem}
                                                 </span>
                                             </div>
@@ -1013,7 +992,7 @@ const DeclarationList: React.FC = () => {
 
                                     {/* Suggestion Section (Optional - Mocked for visual) */}
                                     <div className={`p-4 rounded-xl border border-dashed ${isDarkMode ? 'border-gray-700 bg-[#1a1a1a]' : 'border-gray-300 bg-gray-50'}`}>
-                                        <h4 className={`text-xs font-bold uppercase mb-2 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                        <h4 className={`text-xs font-bold uppercase mb-2 ${isDarkMode ? 'text-gray-500' : 'text-[#262626] opacity-60'}`}>
                                             ÖNERİLEN AKSİYON
                                         </h4>
                                         <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -1115,4 +1094,12 @@ const DeclarationList: React.FC = () => {
     );
 };
 
-export default DeclarationList;
+const DeclarationsPage: React.FC = () => {
+    return (
+        <Suspense fallback={<div className="flex justify-center p-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div></div>}>
+            <DeclarationsContent />
+        </Suspense>
+    );
+};
+
+export default DeclarationsPage;
