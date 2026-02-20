@@ -2,7 +2,7 @@
 
 
 import React, { useState, Suspense } from 'react';
-import { Segmented, Typography, Table, Input, Button, Tag, Space, Empty, Tooltip, Drawer, notification, Select, ConfigProvider, theme, DatePicker, Row, Col } from 'antd';
+import { Segmented, Typography, Table, Input, Button, Tag, Space, Empty, Tooltip, Drawer, notification, Select, ConfigProvider, theme, DatePicker } from 'antd';
 import {
     SearchOutlined,
     FilterOutlined,
@@ -24,6 +24,7 @@ import {
 import { Timeline } from 'antd';
 import { useTheme } from '@/context/ThemeContext';
 import { useDashboard } from '@/context/DashboardContext';
+import { PermissionGuard } from '@/components/auth/PermissionGuard';
 import type { ColumnsType } from 'antd/es/table';
 import { declarationsList, riskDetails, b2cDeclarations } from '@/utils/mockData';
 import type { Declaration } from '@/utils/mockData';
@@ -81,7 +82,7 @@ const DeclarationsContent: React.FC = () => {
         riskCodesAbsolute: [] as string[],
         riskCodesPotential: [] as string[],
         riskCodesML: [] as string[],
-        declarationType: 'Hepsi' as 'Hepsi' | 'İthalat' | 'İhracat',
+        declarationType: 'Hepsi' as 'Hepsi' | 'İthalat' | 'İhracat' | 'ETGB İth.',
         regime: null as string | null,
         year: null as string | null,
         paymentMethod: null as string | null,
@@ -340,19 +341,21 @@ const DeclarationsContent: React.FC = () => {
                         />
                     </Tooltip>
 
-                    <Tooltip title="İşlem Geçmişi">
-                        <Button
-                            type="text"
-                            shape="circle"
-                            icon={<HistoryOutlined />}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedHistoryRecord(record);
-                                setHistoryDrawerVisible(true);
-                            }}
-                            className={isDarkMode ? 'hover:bg-[#303030] text-white' : 'bg-transparent hover:bg-gray-100 text-[#262626] transition-colors'}
-                        />
-                    </Tooltip>
+                    <PermissionGuard allowedRoles={['Admin', 'Manager']}>
+                        <Tooltip title="İşlem Geçmişi">
+                            <Button
+                                type="text"
+                                shape="circle"
+                                icon={<HistoryOutlined />}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedHistoryRecord(record);
+                                    setHistoryDrawerVisible(true);
+                                }}
+                                className={isDarkMode ? 'hover:bg-[#303030] text-white' : 'bg-transparent hover:bg-gray-100 text-[#262626] transition-colors'}
+                            />
+                        </Tooltip>
+                    </PermissionGuard>
                 </div>
             ),
         },
@@ -433,7 +436,7 @@ const DeclarationsContent: React.FC = () => {
 
                 <div className={`grid grid-cols-1 md:grid-cols-5 gap-4`}>
                     {/* Card 1: Toplam Beyanname */}
-                    <div className={`p-4 rounded-[16px] border shadow-sm relative overflow-hidden transition-all duration-300 flex justify-between items-start ${isDarkMode ? 'bg-[#1f1f1f] border-[#303030]' : 'bg-white border-[#d9d9d9]'}`}>
+                    <div className={`p-4 rounded-[8px] border shadow-sm relative overflow-hidden transition-all duration-300 flex justify-between items-start ${isDarkMode ? 'bg-[#1f1f1f] border-[#303030]' : 'bg-white border-[#d9d9d9]'}`}>
                         <div className="flex flex-col justify-between h-full z-10">
                             <div>
                                 <span className={`text-[30px] font-bold block ${isDarkMode ? 'text-white' : 'text-[#262626]'}`}>{totalDeclarations}</span>
@@ -452,7 +455,7 @@ const DeclarationsContent: React.FC = () => {
                     </div>
 
                     {/* Card 2: Mutlak Risk */}
-                    <div className={`p-4 rounded-[16px] border shadow-sm relative overflow-hidden transition-all duration-300 flex justify-between items-start ${isDarkMode ? 'bg-[#1f1f1f] border-[#303030]' : 'bg-white border-[#d9d9d9]'}`}>
+                    <div className={`p-4 rounded-[8px] border shadow-sm relative overflow-hidden transition-all duration-300 flex justify-between items-start ${isDarkMode ? 'bg-[#1f1f1f] border-[#303030]' : 'bg-white border-[#d9d9d9]'}`}>
                         <div className="flex flex-col justify-between h-full z-10">
                             <div>
                                 <span className={`text-[30px] font-bold block ${isDarkMode ? 'text-white' : 'text-[#262626]'}`}>{totalAbsoluteRisk}</span>
@@ -476,7 +479,7 @@ const DeclarationsContent: React.FC = () => {
                     </div>
 
                     {/* Card 3: Potansiyel Risk */}
-                    <div className={`p-4 rounded-[16px] border shadow-sm relative overflow-hidden transition-all duration-300 flex justify-between items-start ${isDarkMode ? 'bg-[#1f1f1f] border-[#303030]' : 'bg-white border-[#d9d9d9]'}`}>
+                    <div className={`p-4 rounded-[8px] border shadow-sm relative overflow-hidden transition-all duration-300 flex justify-between items-start ${isDarkMode ? 'bg-[#1f1f1f] border-[#303030]' : 'bg-white border-[#d9d9d9]'}`}>
                         <div className="flex flex-col justify-between h-full z-10">
                             <div>
                                 <span className={`text-[30px] font-bold block ${isDarkMode ? 'text-white' : 'text-[#262626]'}`}>{totalPotentialRisk}</span>
@@ -500,7 +503,7 @@ const DeclarationsContent: React.FC = () => {
                     </div>
 
                     {/* Card 4: AI & ML Bulgusu */}
-                    <div className={`p-4 rounded-[16px] border shadow-sm relative overflow-hidden transition-all duration-300 flex justify-between items-start ${isDarkMode ? 'bg-[#1f1f1f] border-[#303030]' : 'bg-white border-[#d9d9d9]'}`}>
+                    <div className={`p-4 rounded-[8px] border shadow-sm relative overflow-hidden transition-all duration-300 flex justify-between items-start ${isDarkMode ? 'bg-[#1f1f1f] border-[#303030]' : 'bg-white border-[#d9d9d9]'}`}>
                         <div className="flex flex-col justify-between h-full z-10">
                             <div>
                                 <span className={`text-[30px] font-bold block ${isDarkMode ? 'text-white' : 'text-[#262626]'}`}>{totalMLRisk}</span>
@@ -524,7 +527,7 @@ const DeclarationsContent: React.FC = () => {
                     </div>
 
                     {/* Card 5: İntaç Bekleyen */}
-                    <div className={`p-4 rounded-[16px] border shadow-sm relative overflow-hidden transition-all duration-300 flex justify-between items-start ${isDarkMode ? 'bg-[#1f1f1f] border-[#303030]' : 'bg-white border-[#d9d9d9]'}`}>
+                    <div className={`p-4 rounded-[8px] border shadow-sm relative overflow-hidden transition-all duration-300 flex justify-between items-start ${isDarkMode ? 'bg-[#1f1f1f] border-[#303030]' : 'bg-white border-[#d9d9d9]'}`}>
                         <div className="flex flex-col justify-between h-full z-10">
                             <div>
                                 <span className={`text-[30px] font-bold block ${isDarkMode ? 'text-white' : 'text-[#262626]'}`}>{totalPendingIntac}</span>
@@ -600,26 +603,30 @@ const DeclarationsContent: React.FC = () => {
                         </div>
 
                         <div className="flex gap-2 items-center">
-                            <Button
-                                icon={<ExportOutlined />}
-                                style={{ backgroundColor: isDarkMode ? '#9f9fa7' : 'transparent', color: isDarkMode ? '#ffffff' : 'inherit', border: isDarkMode ? 'none' : '' }}
-                            >
-                                Dışa Aktar
-                            </Button>
+                            <PermissionGuard allowedRoles={['Admin', 'Manager']}>
+                                <Button
+                                    icon={<ExportOutlined />}
+                                    style={{ backgroundColor: isDarkMode ? '#9f9fa7' : 'transparent', color: isDarkMode ? '#ffffff' : 'inherit', border: isDarkMode ? 'none' : '' }}
+                                >
+                                    Dışa Aktar
+                                </Button>
+                            </PermissionGuard>
 
                             {selectedRowKeys.length > 0 && (
-                                <Button
-                                    icon={<CheckCircleOutlined />}
-                                    onClick={handleStatusCheck}
-                                    disabled={isChecking}
-                                    style={{
-                                        backgroundColor: isDarkMode ? '#3f3f46' : '#f4f4f5',
-                                        color: isDarkMode ? '#ffffff' : '#000000',
-                                        borderColor: isDarkMode ? '#3f3f46' : '#d4d4d8'
-                                    }}
-                                >
-                                    Statü Kontrol Et
-                                </Button>
+                                <PermissionGuard allowedRoles={['Admin', 'Manager']}>
+                                    <Button
+                                        icon={<CheckCircleOutlined />}
+                                        onClick={handleStatusCheck}
+                                        disabled={isChecking}
+                                        style={{
+                                            backgroundColor: isDarkMode ? '#3f3f46' : '#f4f4f5',
+                                            color: isDarkMode ? '#ffffff' : '#000000',
+                                            borderColor: isDarkMode ? '#3f3f46' : '#d4d4d8'
+                                        }}
+                                    >
+                                        Statü Kontrol Et
+                                    </Button>
+                                </PermissionGuard>
                             )}
                         </div>
                     </div>
@@ -828,6 +835,7 @@ const DeclarationsContent: React.FC = () => {
                                             { label: 'Hepsi', value: 'Hepsi' },
                                             { label: 'İthalat', value: 'İthalat' },
                                             { label: 'İhracat', value: 'İhracat' },
+                                            { label: 'ETGB İth.', value: 'ETGB İth.' },
                                         ]}
                                         popupClassName={isDarkMode ? 'dark-select-dropdown' : ''}
                                     />
@@ -849,7 +857,7 @@ const DeclarationsContent: React.FC = () => {
                         }
                     }}
                 >
-                    <div className={`rounded-[16px] border shadow-sm overflow-hidden transition-colors duration-200 ${isDarkMode ? 'border-[#303030]' : 'border-[#d9d9d9]'}`}
+                    <div className={`rounded-[8px] border shadow-sm overflow-hidden transition-colors duration-200 ${isDarkMode ? 'border-[#303030]' : 'border-[#d9d9d9]'}`}
                         style={{ backgroundColor: searchBg }}
                     >
                         <Table

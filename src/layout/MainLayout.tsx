@@ -9,6 +9,7 @@ import {
   FileTextOutlined,
   TeamOutlined,
   AppstoreOutlined,
+  SettingOutlined,
 } from '@ant-design/icons'
 import { usePathname, useRouter } from 'next/navigation'
 import Header from '@/components/layout/Header'
@@ -24,7 +25,7 @@ interface MainLayoutProps {
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false)
   const { isDarkMode } = useTheme()
-  const isAdmin = true; // Hardcoded for view
+  const { isAdmin, user } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
 
@@ -48,8 +49,16 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       label: 'Beyanname Listesi',
       icon: <FileTextOutlined />,
     },
-
   ]
+
+  // Add Users menu only if Admin or Manager
+  if (isAdmin || user?.role === 'Manager') {
+    menuItems.push({
+      key: '/settings/users',
+      label: 'Kullanıcılar',
+      icon: <TeamOutlined />,
+    });
+  }
 
   return (
     <Layout style={{ minHeight: '100vh' }}>

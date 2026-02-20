@@ -75,7 +75,7 @@ export interface Declaration {
   buyer: string
   seller: string
   status: 'Completed' | 'Pending' | 'Risk' | 'Processing'
-  type: 'İthalat' | 'İhracat'
+  type: 'İthalat' | 'İhracat' | 'ETGB İth.'
   intacDate: string
   absoluteRisks?: Array<string>
   potentialRisks?: Array<string>
@@ -272,7 +272,7 @@ export const b2cDeclarations: Array<Declaration> = [
     buyer: 'YURTDIŞI FİRMA',
     seller: 'EVRİM YAZILIM VE DANIŞMANLIK TİC.LTD.ŞTİ.',
     status: 'Completed',
-    type: 'İhracat',
+    type: 'ETGB İth.',
     intacDate: '26.02.2026',
     absoluteRisks: [],
     potentialRisks: [],
@@ -302,7 +302,7 @@ export const b2cDeclarations: Array<Declaration> = [
     buyer: 'AVRASYA KO G L MA MEKANİK BAKIM HİZM.SAN. VE TİC.',
     seller: 'SECURITAS TEKNOLOJI HIZMETLERI',
     status: 'Processing',
-    type: 'İhracat',
+    type: 'ETGB İth.',
     intacDate: '-',
     absoluteRisks: [],
     potentialRisks: ['pot_2'],
@@ -332,7 +332,7 @@ export const b2cDeclarations: Array<Declaration> = [
     buyer: 'AVRASYA KO G L MA MEKANİK BAKIM HİZM.SAN. VE TİC.',
     seller: 'EVRİM YAZILIM VE DANIŞMANLIK TİC.LTD.ŞTİ.',
     status: 'Pending',
-    type: 'İhracat',
+    type: 'ETGB İth.',
     intacDate: '-',
     absoluteRisks: [],
     potentialRisks: [],
@@ -362,7 +362,7 @@ export const b2cDeclarations: Array<Declaration> = [
     buyer: 'YURTDIŞI FİRMA',
     seller: 'EVRİM YAZILIM VE DANIŞMANLIK TİC.LTD.ŞTİ.',
     status: 'Completed',
-    type: 'İhracat',
+    type: 'ETGB İth.',
     intacDate: '15.02.2026',
     absoluteRisks: [],
     potentialRisks: [],
@@ -392,7 +392,7 @@ export const b2cDeclarations: Array<Declaration> = [
     buyer: 'aaaa',
     seller: 'bbb',
     status: 'Risk',
-    type: 'İhracat',
+    type: 'ETGB İth.',
     intacDate: '-',
     absoluteRisks: ['red_1'],
     potentialRisks: [],
@@ -430,7 +430,7 @@ export const b2cDeclarations: Array<Declaration> = [
     buyer: 'EVRİM YAZILIM VE DANIŞMANLIK TİCARET A.Ş.',
     seller: 'EVRİM YAZILIM',
     status: 'Pending',
-    type: 'İhracat',
+    type: 'ETGB İth.',
     intacDate: '-',
     absoluteRisks: [],
     potentialRisks: [],

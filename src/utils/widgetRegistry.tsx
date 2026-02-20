@@ -111,7 +111,7 @@ export const PastelCardComponent = ({
 
             {/* Header: Icon + Menu */}
             <div className="flex justify-between items-start w-full mb-4">
-                <div className={`w-12 h-12 rounded-[16px] flex items-center justify-center shrink-0 ${iconBg} ${iconColor} text-xl shadow-sm`}>
+                <div className={`w-12 h-12 rounded-[8px] flex items-center justify-center shrink-0 ${iconBg} ${iconColor} text-xl shadow-sm`}>
                     {icon}
                 </div>
 

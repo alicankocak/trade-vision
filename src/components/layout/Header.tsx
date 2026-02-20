@@ -9,6 +9,7 @@ import {
     LogoutOutlined,
     SunOutlined,
     MoonOutlined,
+    SettingOutlined,
 } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
@@ -33,24 +34,36 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle }) => {
         {
             key: '0',
             label: (
-                <div className="flex flex-col px-2">
-                    <span className="font-semibold">{user?.name}</span>
-                    <span className="text-xs text-gray-500">{user?.role}</span>
+                <div className="flex flex-col px-4 py-1">
+                    <span className="font-semibold text-[14px]">{user?.name}</span>
+                    <span className="text-xs text-gray-500 font-medium">{user?.role}</span>
                 </div>
             ),
             disabled: true,
+            style: { cursor: 'default' }
         },
         { type: 'divider' },
         {
             key: '1',
             icon: <UserOutlined />,
             label: 'Profilim',
-            onClick: () => router.push('/profile'),
+            onClick: () => router.push('/settings/profile'),
         },
-        // Removed Settings as implied by cleanup
+        {
+            key: 'settings',
+            icon: <SettingOutlined />,
+            label: 'Ayarlar',
+            onClick: () => {
+                if (user?.role === 'Admin' || user?.role === 'Manager') {
+                    router.push('/settings/users');
+                } else {
+                    router.push('/settings/profile');
+                }
+            },
+        },
         { type: 'divider' },
         {
-            key: '3',
+            key: 'logout',
             icon: <LogoutOutlined />,
             label: 'Çıkış Yap',
             danger: true,
@@ -116,11 +129,23 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle }) => {
                     </Badge>
 
                     {/* Profile Avatar */}
-                    <Dropdown menu={{ items: userMenu }} placement="bottomRight" arrow>
+                    <Dropdown
+                        menu={{
+                            items: userMenu,
+                            style: {
+                                borderRadius: 8,
+                                padding: 8,
+                                minWidth: 200,
+                                backgroundColor: isDarkMode ? '#262626' : '#ffffff',
+                            }
+                        }}
+                        placement="bottomRight"
+                        trigger={['click']}
+                    >
                         <Button
                             type="text"
-                            icon={<UserOutlined />}
-                            className={isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-black'}
+                            icon={<Avatar size={32} icon={<UserOutlined />} style={{ backgroundColor: isDarkMode ? '#434343' : '#f0f0f0', color: isDarkMode ? '#ffffff' : '#595959' }} />}
+                            style={{ padding: 0, height: 40, width: 40, borderRadius: '50%' }}
                         />
                     </Dropdown>
                 </div>

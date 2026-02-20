@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState } from 'react'
 import type { ReactNode } from 'react'
 
-type Role = 'Admin' | 'Manager' | 'User'
+type Role = 'Admin' | 'Manager' | 'Viewer'
 
 interface User {
   id: string
@@ -16,6 +16,8 @@ interface AuthContextType {
   login: (role?: Role) => void
   logout: () => void
   isAdmin: boolean
+  isManager: boolean
+  isViewer: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -47,9 +49,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   }
 
   const isAdmin = user?.role === 'Admin'
+  const isManager = user?.role === 'Manager'
+  const isViewer = user?.role === 'Viewer'
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAdmin }}>
+    <AuthContext.Provider value={{ user, login, logout, isAdmin, isManager, isViewer }}>
       {children}
     </AuthContext.Provider>
   )
