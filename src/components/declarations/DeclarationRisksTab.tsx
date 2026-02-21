@@ -1,4 +1,4 @@
-import { FileTextOutlined, CalendarOutlined, CarOutlined, CreditCardOutlined, InboxOutlined, DollarOutlined, ReceiptOutlined, DownloadOutlined, EyeOutlined, GlobalOutlined, EnvironmentOutlined, SafetyOutlined, RiseOutlined, CloseCircleOutlined, WarningOutlined, InfoCircleOutlined, RightOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { FileTextOutlined, CalendarOutlined, CarOutlined, CreditCardOutlined, InboxOutlined, DollarOutlined, ContainerOutlined, DownloadOutlined, EyeOutlined, GlobalOutlined, EnvironmentOutlined, SafetyOutlined, RiseOutlined, CloseCircleOutlined, WarningOutlined, InfoCircleOutlined, RightOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { useState } from 'react';
 import { mockDeclarations, ExtendedDeclaration, ShippingInsurance, Tax } from './mockData';
 import { declarationFiles, Declaration } from '../../utils/mockData';
@@ -400,7 +400,7 @@ export default function DeclarationRisksTab({ declaration }: Props) {
                                 <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                                     <div className="p-4 border-b border-gray-200 bg-gray-50">
                                         <div className="flex items-center gap-2">
-                                            <ReceiptOutlined className="w-5 h-5 text-gray-700" />
+                                            <ContainerOutlined className="w-5 h-5 text-gray-700" />
                                             <h3 className="font-bold text-gray-900 text-sm">Ödenen Vergiler</h3>
                                         </div>
                                     </div>
@@ -660,7 +660,7 @@ export default function DeclarationRisksTab({ declaration }: Props) {
                             </div>
                             <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
                                 <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-300 group-[.is-active]:bg-blue-500 group-[.is-active]:text-blue-50 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
-                                    <ReceiptOutlined className="w-5 h-5 text-white" />
+                                    <ContainerOutlined className="w-5 h-5 text-white" />
                                 </div>
                                 <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
                                     <div className="flex items-center justify-between space-x-2 mb-1">
