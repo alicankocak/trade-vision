@@ -12,22 +12,7 @@ import {
     DownOutlined,
     DeleteOutlined
 } from '@ant-design/icons';
-import {
-    DndContext,
-    closestCenter,
-    KeyboardSensor,
-    PointerSensor,
-    useSensor,
-    useSensors,
-    DragOverlay
-} from '@dnd-kit/core';
-import {
-    arrayMove,
-    SortableContext,
-    sortableKeyboardCoordinates,
-    rectSortingStrategy,
-} from '@dnd-kit/sortable';
-import { SortableWidget } from '@/components/dashboard/SortableWidget';
+
 import { WIDGET_REGISTRY } from '@/utils/widgetRegistry';
 
 // Types
@@ -86,13 +71,7 @@ const Dashboard: React.FC = () => {
         }));
     };
 
-    // DnD Sensors
-    const sensors = useSensors(
-        useSensor(PointerSensor),
-        useSensor(KeyboardSensor, {
-            coordinateGetter: sortableKeyboardCoordinates,
-        })
-    );
+
 
     // --- Mock Data for Content ---
     const dashboardData = {
@@ -116,28 +95,7 @@ const Dashboard: React.FC = () => {
     // Reset or Switch logic
     // When segment changes, the 'widgets' variable automatically updates due to strict React rendering of derived state.
 
-    const handleDragEnd = (event: any) => {
-        const { active, over } = event;
-        if (active.id !== over.id) {
-            setWidgets((items) => {
-                const oldIndex = items.findIndex(i => i.id === active.id);
-                const newIndex = items.findIndex(i => i.id === over.id);
-                return arrayMove(items, oldIndex, newIndex);
-            });
-        }
-    };
 
-    const handleResize = (widgetId: string, newColSpan: number) => {
-        setWidgets(prev => prev.map(w =>
-            w.id === widgetId ? { ...w, colSpan: newColSpan } : w
-        ));
-    };
-
-    const handleResizeHeight = (widgetId: string, newRowSpan: number) => {
-        setWidgets(prev => prev.map(w =>
-            w.id === widgetId ? { ...w, rowSpan: newRowSpan } : w
-        ));
-    };
 
     const handleSave = () => {
         setIsEditing(false);
@@ -192,15 +150,7 @@ const Dashboard: React.FC = () => {
         const colorProps = defaultProps.colors ? defaultProps.colors(isDarkMode) : {};
 
         return (
-            <SortableWidget
-                key={widget.id}
-                id={widget.id}
-                isEditing={isEditing}
-                colSpan={currentSpan}
-                rowSpan={currentRow}
-                onResize={(newSpan) => handleResize(widget.id, newSpan)}
-                onResizeHeight={(newRow) => handleResizeHeight(widget.id, newRow)}
-            >
+            <div key={widget.id} style={{ gridColumn: `span ${currentSpan}`, gridRow: `span ${currentRow}` }}>
                 <WidgetComponent
                     {...defaultProps}
                     {...dynamicProps}
@@ -213,7 +163,7 @@ const Dashboard: React.FC = () => {
                     subTextClass={isDarkMode ? 'text-gray-400' : 'text-slate-500'}
                     cardBg={isDarkMode ? 'bg-[#1f1f1f]' : 'bg-white'}
                 />
-            </SortableWidget>
+            </div>
         );
     };
 
@@ -297,21 +247,10 @@ const Dashboard: React.FC = () => {
 
             </div>
 
-            {/* Drag and Drop Grid */}
-            <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-            >
-                <SortableContext
-                    items={widgets.map(w => w.id)}
-                    strategy={rectSortingStrategy}
-                >
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 auto-rows-[46px] gap-6 pb-20">
-                        {widgets.map(widget => renderWidget(widget))}
-                    </div>
-                </SortableContext>
-            </DndContext>
+            {/* Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 auto-rows-[46px] gap-6 pb-20">
+                {widgets.map(widget => renderWidget(widget))}
+            </div>
 
 
             {/* Widgets Drawer */}

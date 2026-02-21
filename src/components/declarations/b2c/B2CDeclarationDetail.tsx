@@ -1,3 +1,4 @@
+import { CheckCircleOutlined, CloseCircleOutlined, WarningOutlined, InfoCircleOutlined, FileTextOutlined, RiseOutlined, InboxOutlined } from '@ant-design/icons';
 import React, { useState, useEffect } from 'react';
 import { Card, Statistic, Row, Col, Button, Badge, Modal, Tabs } from 'antd';
 import {
@@ -5,15 +6,7 @@ import {
     PrinterOutlined,
     ArrowLeftOutlined
 } from '@ant-design/icons';
-import {
-    CheckCircle,
-    AlertCircle,
-    AlertTriangle,
-    Info,
-    FileText,
-    TrendingUp,
-    Package
-} from 'lucide-react';
+
 import { useRouter } from 'next/navigation';
 import { GroupedView } from './GroupedView';
 import { FlatView } from './FlatView';

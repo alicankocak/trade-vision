@@ -1,26 +1,8 @@
+import { FileTextOutlined, CalendarOutlined, CarOutlined, CreditCardOutlined, InboxOutlined, DollarOutlined, ReceiptOutlined, DownloadOutlined, EyeOutlined, GlobalOutlined, EnvironmentOutlined, SafetyOutlined, RiseOutlined, CloseCircleOutlined, WarningOutlined, InfoCircleOutlined, RightOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { useState } from 'react';
 import { mockDeclarations, ExtendedDeclaration, ShippingInsurance, Tax } from './mockData';
 import { declarationFiles, Declaration } from '../../utils/mockData';
-import {
-    FileText,
-    Calendar,
-    Truck,
-    CreditCard,
-    Package,
-    DollarSign,
-    Receipt,
-    Download,
-    Eye,
-    Globe,
-    MapPin,
-    Shield,
-    TrendingUp,
-    AlertCircle,
-    AlertTriangle,
-    Info,
-    ChevronRight,
-    CheckCircle
-} from 'lucide-react';
+
 
 interface ErrorCard {
     id: string;
@@ -154,7 +136,7 @@ export default function DeclarationRisksTab({ declaration }: Props) {
                 </div>
                 <div className="flex items-center gap-3">
                     <button className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all flex items-center gap-2 text-sm font-semibold text-gray-700">
-                        <Download className="w-4 h-4" />
+                        <DownloadOutlined className="w-4 h-4" />
                         XML İndir
                     </button>
                 </div>
@@ -201,7 +183,7 @@ export default function DeclarationRisksTab({ declaration }: Props) {
                         <div className="bg-white rounded-xl border border-gray-200 p-6">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 bg-red-50 rounded-lg flex items-center justify-center">
-                                    <AlertCircle className="w-6 h-6 text-red-600" />
+                                    <CloseCircleOutlined className="w-6 h-6 text-red-600" />
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-600 font-medium">Mutlak Risk</p>
@@ -213,7 +195,7 @@ export default function DeclarationRisksTab({ declaration }: Props) {
                         <div className="bg-white rounded-xl border border-gray-200 p-6">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 bg-yellow-50 rounded-lg flex items-center justify-center">
-                                    <AlertTriangle className="w-6 h-6 text-yellow-600" />
+                                    <WarningOutlined className="w-6 h-6 text-yellow-600" />
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-600 font-medium">Potansiyel Risk</p>
@@ -225,7 +207,7 @@ export default function DeclarationRisksTab({ declaration }: Props) {
                         <div className="bg-white rounded-xl border border-gray-200 p-6">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center">
-                                    <Info className="w-6 h-6 text-purple-600" />
+                                    <InfoCircleOutlined className="w-6 h-6 text-purple-600" />
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-600 font-medium">AI & ML</p>
@@ -244,7 +226,7 @@ export default function DeclarationRisksTab({ declaration }: Props) {
                                 <div className="flex items-start justify-between mb-6">
                                     <div className="flex items-center gap-4">
                                         <div className="w-14 h-14 bg-white/15 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20">
-                                            <FileText className="w-7 h-7 text-white" />
+                                            <FileTextOutlined className="w-7 h-7 text-white" />
                                         </div>
                                         <div>
                                             <h2 className="text-2xl font-bold text-white">
@@ -254,7 +236,7 @@ export default function DeclarationRisksTab({ declaration }: Props) {
                                         </div>
                                     </div>
                                     <button className="px-4 py-2 bg-white/20 backdrop-blur-md hover:bg-white/30 text-white rounded-lg border border-white/30 transition-all flex items-center gap-2 text-sm font-semibold">
-                                        <Eye className="w-4 h-4" />
+                                        <EyeOutlined className="w-4 h-4" />
                                         Görüntüle
                                     </button>
                                 </div>
@@ -277,13 +259,13 @@ export default function DeclarationRisksTab({ declaration }: Props) {
                                 </div>
                             </div>
 
-                            {/* Company Info / B2C Details */}
+                            {/* Company InfoCircleOutlined / B2C Details */}
                             {isB2C ? (
                                 <div className="grid grid-cols-3 gap-4">
                                     <div className="bg-white rounded-xl border border-gray-200 p-4">
                                         <div className="flex items-center gap-2 mb-2">
                                             <div className="w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center">
-                                                <FileText className="w-4 h-4 text-orange-600" />
+                                                <FileTextOutlined className="w-4 h-4 text-orange-600" />
                                             </div>
                                             <div>
                                                 <p className="text-xs text-gray-500 font-medium">Taşıma Senedi</p>
@@ -296,7 +278,7 @@ export default function DeclarationRisksTab({ declaration }: Props) {
                                     <div className="bg-white rounded-xl border border-gray-200 p-4">
                                         <div className="flex items-center gap-2 mb-2">
                                             <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
-                                                <Package className="w-4 h-4 text-blue-600" />
+                                                <InboxOutlined className="w-4 h-4 text-blue-600" />
                                             </div>
                                             <div>
                                                 <p className="text-xs text-gray-500 font-medium">Ağırlık Bilgisi</p>
@@ -311,7 +293,7 @@ export default function DeclarationRisksTab({ declaration }: Props) {
                                     <div className="bg-white rounded-xl border border-gray-200 p-4">
                                         <div className="flex items-center gap-2 mb-2">
                                             <div className="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center">
-                                                <DollarSign className="w-4 h-4 text-green-600" />
+                                                <DollarOutlined className="w-4 h-4 text-green-600" />
                                             </div>
                                             <div>
                                                 <p className="text-xs text-gray-500 font-medium">Toplam Vergi</p>
@@ -328,7 +310,7 @@ export default function DeclarationRisksTab({ declaration }: Props) {
                                     <div className="bg-white rounded-xl border border-gray-200 p-4">
                                         <div className="flex items-center gap-2 mb-2">
                                             <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                                                <Globe className="w-4 h-4 text-gray-700" />
+                                                <GlobalOutlined className="w-4 h-4 text-gray-700" />
                                             </div>
                                             <div>
                                                 <p className="text-xs text-gray-500 font-medium">Gönderici Ülke</p>
@@ -341,7 +323,7 @@ export default function DeclarationRisksTab({ declaration }: Props) {
                                     <div className="bg-white rounded-xl border border-gray-200 p-4">
                                         <div className="flex items-center gap-2">
                                             <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                                                <MapPin className="w-4 h-4 text-gray-700" />
+                                                <EnvironmentOutlined className="w-4 h-4 text-gray-700" />
                                             </div>
                                             <div>
                                                 <p className="text-xs text-gray-500 font-medium">Çıkış Ülkesi</p>
@@ -353,7 +335,7 @@ export default function DeclarationRisksTab({ declaration }: Props) {
                                     <div className="bg-white rounded-xl border border-gray-200 p-4">
                                         <div className="flex items-center gap-2">
                                             <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                                                <Shield className="w-4 h-4 text-gray-700" />
+                                                <SafetyOutlined className="w-4 h-4 text-gray-700" />
                                             </div>
                                             <div>
                                                 <p className="text-xs text-gray-500 font-medium">Rejim Kodu</p>
@@ -369,7 +351,7 @@ export default function DeclarationRisksTab({ declaration }: Props) {
                                 <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                                     <div className="p-4 border-b border-gray-200 bg-gray-50">
                                         <div className="flex items-center gap-2">
-                                            <DollarSign className="w-5 h-5 text-gray-700" />
+                                            <DollarOutlined className="w-5 h-5 text-gray-700" />
                                             <h3 className="font-bold text-gray-900 text-sm">Navlun & Sigorta</h3>
                                         </div>
                                     </div>
@@ -418,7 +400,7 @@ export default function DeclarationRisksTab({ declaration }: Props) {
                                 <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                                     <div className="p-4 border-b border-gray-200 bg-gray-50">
                                         <div className="flex items-center gap-2">
-                                            <Receipt className="w-5 h-5 text-gray-700" />
+                                            <ReceiptOutlined className="w-5 h-5 text-gray-700" />
                                             <h3 className="font-bold text-gray-900 text-sm">Ödenen Vergiler</h3>
                                         </div>
                                     </div>
@@ -468,7 +450,7 @@ export default function DeclarationRisksTab({ declaration }: Props) {
                                 <div className="p-4 border-b border-gray-200 bg-gray-50">
                                     <div className="flex items-center justify-between w-full">
                                         <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                                            <AlertCircle className="w-5 h-5 text-red-600" />
+                                            <CloseCircleOutlined className="w-5 h-5 text-red-600" />
                                             Risk Analizi ({mockErrors.length})
                                         </h3>
                                         <select
@@ -488,7 +470,7 @@ export default function DeclarationRisksTab({ declaration }: Props) {
                                     {filteredErrors.map((error, index) => {
                                         const iconConfig = error.severity === 'critical'
                                             ? {
-                                                icon: AlertCircle,
+                                                icon: CloseCircleOutlined,
                                                 color: 'text-red-700',
                                                 bg: 'bg-red-50',
                                                 label: 'Mutlak Risk',
@@ -499,7 +481,7 @@ export default function DeclarationRisksTab({ declaration }: Props) {
                                             }
                                             : error.severity === 'warning'
                                                 ? {
-                                                    icon: AlertTriangle,
+                                                    icon: WarningOutlined,
                                                     color: 'text-yellow-700',
                                                     bg: 'bg-yellow-50',
                                                     label: 'Potansiyel Risk',
@@ -509,7 +491,7 @@ export default function DeclarationRisksTab({ declaration }: Props) {
                                                     cardHover: 'hover:border-yellow-300 hover:bg-yellow-100'
                                                 }
                                                 : {
-                                                    icon: Info,
+                                                    icon: InfoCircleOutlined,
                                                     color: 'text-purple-700',
                                                     bg: 'bg-purple-50',
                                                     label: 'AI & ML Risk',
@@ -575,7 +557,7 @@ export default function DeclarationRisksTab({ declaration }: Props) {
                 <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mt-6">
                     <div className="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
                         <div className="flex items-center gap-2">
-                            <Package className="w-5 h-5 text-gray-700" />
+                            <InboxOutlined className="w-5 h-5 text-gray-700" />
                             <h3 className="font-bold text-gray-900 text-sm">Kalem Listesi</h3>
                         </div>
                         <span className="text-xs font-semibold text-gray-500 bg-white px-2 py-1 rounded border border-gray-200">
@@ -617,7 +599,7 @@ export default function DeclarationRisksTab({ declaration }: Props) {
                 <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                     <div className="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
                         <div className="flex items-center gap-2">
-                            <FileText className="w-5 h-5 text-gray-700" />
+                            <FileTextOutlined className="w-5 h-5 text-gray-700" />
                             <h3 className="font-bold text-gray-900 text-sm">Arşiv Dokümanları</h3>
                         </div>
                         <span className="text-xs font-semibold text-gray-500 bg-white px-2 py-1 rounded border border-gray-200">
@@ -629,7 +611,7 @@ export default function DeclarationRisksTab({ declaration }: Props) {
                             <div key={file.id} className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between group">
                                 <div className="flex items-center gap-4">
                                     <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center">
-                                        <FileText className="w-5 h-5 text-red-600" />
+                                        <FileTextOutlined className="w-5 h-5 text-red-600" />
                                     </div>
                                     <div>
                                         <h4 className="font-semibold text-gray-900 text-sm">{file.name}</h4>
@@ -642,10 +624,10 @@ export default function DeclarationRisksTab({ declaration }: Props) {
                                 </div>
                                 <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
-                                        <Eye className="w-4 h-4" />
+                                        <EyeOutlined className="w-4 h-4" />
                                     </button>
                                     <button className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all">
-                                        <Download className="w-4 h-4" />
+                                        <DownloadOutlined className="w-4 h-4" />
                                     </button>
                                 </div>
                             </div>
@@ -658,7 +640,7 @@ export default function DeclarationRisksTab({ declaration }: Props) {
                 <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                     <div className="p-4 border-b border-gray-200 bg-gray-50">
                         <div className="flex items-center gap-2">
-                            <TrendingUp className="w-5 h-5 text-gray-700" />
+                            <RiseOutlined className="w-5 h-5 text-gray-700" />
                             <h3 className="font-bold text-gray-900 text-sm">İşlem Geçmişi</h3>
                         </div>
                     </div>
@@ -666,7 +648,7 @@ export default function DeclarationRisksTab({ declaration }: Props) {
                         <div className="relative space-y-8 before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-300 before:to-transparent">
                             <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
                                 <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-300 group-[.is-active]:bg-emerald-500 group-[.is-active]:text-emerald-50 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
-                                    <Truck className="w-5 h-5 text-white" />
+                                    <CarOutlined className="w-5 h-5 text-white" />
                                 </div>
                                 <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
                                     <div className="flex items-center justify-between space-x-2 mb-1">
@@ -678,7 +660,7 @@ export default function DeclarationRisksTab({ declaration }: Props) {
                             </div>
                             <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
                                 <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-300 group-[.is-active]:bg-blue-500 group-[.is-active]:text-blue-50 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
-                                    <Receipt className="w-5 h-5 text-white" />
+                                    <ReceiptOutlined className="w-5 h-5 text-white" />
                                 </div>
                                 <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
                                     <div className="flex items-center justify-between space-x-2 mb-1">
@@ -690,7 +672,7 @@ export default function DeclarationRisksTab({ declaration }: Props) {
                             </div>
                             <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
                                 <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-300 group-[.is-active]:bg-amber-500 group-[.is-active]:text-amber-50 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
-                                    <AlertTriangle className="w-5 h-5 text-white" />
+                                    <WarningOutlined className="w-5 h-5 text-white" />
                                 </div>
                                 <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
                                     <div className="flex items-center justify-between space-x-2 mb-1">
@@ -702,7 +684,7 @@ export default function DeclarationRisksTab({ declaration }: Props) {
                             </div>
                             <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
                                 <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-300 group-[.is-active]:bg-green-500 group-[.is-active]:text-green-50 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
-                                    <CheckCircle className="w-5 h-5 text-white" />
+                                    <CheckCircleOutlined className="w-5 h-5 text-white" />
                                 </div>
                                 <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
                                     <div className="flex items-center justify-between space-x-2 mb-1">
