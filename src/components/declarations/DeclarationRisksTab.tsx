@@ -1,703 +1,676 @@
-import { FileTextOutlined, CalendarOutlined, CarOutlined, CreditCardOutlined, InboxOutlined, DollarOutlined, ContainerOutlined, DownloadOutlined, EyeOutlined, GlobalOutlined, EnvironmentOutlined, SafetyOutlined, RiseOutlined, CloseCircleOutlined, WarningOutlined, InfoCircleOutlined, RightOutlined, CheckCircleOutlined } from '@ant-design/icons';
-import { useState } from 'react';
-import { mockDeclarations, ExtendedDeclaration, ShippingInsurance, Tax } from './mockData';
-import { declarationFiles, Declaration } from '../../utils/mockData';
+import React, { useRef, useState, useEffect, ReactNode } from 'react';
+import { Card, Tabs, Descriptions, Table, Tag, Statistic, Row, Col, Badge, Button, Menu, Typography } from 'antd';
+import { 
+  FileTextOutlined, WarningOutlined, DollarOutlined, CarOutlined, SafetyOutlined, ShoppingOutlined,
+  BankOutlined, GlobalOutlined, CalendarOutlined, UserOutlined, LeftOutlined, RightOutlined,
+  InfoCircleOutlined, CloseCircleOutlined, DownloadOutlined
+} from '@ant-design/icons';
+import type { ColumnsType } from 'antd/es/table';
 
+const { TabPane } = Tabs;
+const { Paragraph } = Typography;
 
-interface ErrorCard {
-    id: string;
-    title: string;
-    description: string;
-    severity: 'critical' | 'warning' | 'info';
-    category: string;
-    field?: string;
-    suggestion?: string;
-    itemNumber?: string;
+// --- Interfaces ---
+export interface KalemItem {
+  siraNo: number;
+  gtip: string;
+  kalemAciklamasi: string;
+  mense: string;
+  miktar: number;
+  birim: string;
+  brutAgirlik: number;
+  netAgirlik: number;
+  faturaBedeli: number;
+  riskSayisi: number;
+}
+export interface KalemRisk {
+  id: string;
+  kalemSiraNo: number;
+  riskBaslik: string;
+  oncelikDurumu: string;
+  riskKonu: string;
+  riskAciklama: string;
+}
+export interface RiskFinding {
+  id: string;
+  severity: 'critical' | 'warning' | 'info';
+  category: string;
+  message: string;
+  description?: string;
+  relatedItem?: string;
 }
 
-const mockErrors: ErrorCard[] = [
+// --- Mock Data ---
+export const mockBeyanameDetay = {
+  beyanameNo: 'IM20260000000001',
+  durum: 'İşlem Görüyor',
+  coverInfo: {
+    rejim: '4000',
+    toplamRiskSayisi: 3,
+    agumruk: '344600',
+    cikisGumruk: '344600',
+    belgeler: ['0088 - Fatura', '0100 - ATR Belgesi']
+  },
+  beyanameRiskleri: [
     {
-        id: '1',
-        title: 'GTIP - Eşya Tanımı Uyumu',
-        description: 'Kalem bazında net ağırlık başına toplam yurt dışı gideri ile tüm beyanname kalemlerine ait yurt dışı gider ortalaması arasında %15 üstü sapma bulunmaktadır.',
-        severity: 'critical',
-        category: 'Net kilo başına yurt dışı gider ortalaması: 259.79 TL\'dir. İlgili kalemin net kilo başına yurt dışı gider tutarı 300.55 TL\'dir.',
-        field: 'GTIP',
-        suggestion: 'Tarife Sınıflandırması',
-        itemNumber: '1'
+      id: "1",
+      severity: "critical",
+      category: "GTIP Uyumu",
+      message: "Net ağırlık tutarsızlığı var",
+      description: "Kalem bazında ağırlık tutarsızlığı tespit edildi.",
+      relatedItem: "Kalem 1"
     },
     {
-        id: '2',
-        title: 'CIF Teslim - Sigorta Kontrolü',
-        description: 'CIF teslim şeklinde yapılan beyanname için sigorta bilgisi eksik veya hatalı girilmiştir. Kıymet beyanında tutarsızlık tespit edilmiştir.',
-        severity: 'warning',
-        category: 'Beyan edilen sigorta tutarı: 0.00 TL. CIF teslimat için minimum sigorta oranı: %0.5 olmalıdır. Eksik tutar: ~4.250 TL.',
-        field: 'Sigorta Tutarı',
-        suggestion: 'CIF teslim şekli seçilmiş ancak sigorta tutarı %0 olarak girilmiş.',
-        itemNumber: 'Genel'
+      id: "2",
+      severity: "warning",
+      category: "Kıymet Analizi",
+      message: "Referans fiyat sapması",
+      description: "Beyan edilen kıymet referans kıymetin %10 altında.",
+      relatedItem: "Kalem 1, 3"
     },
     {
-        id: '3',
-        title: 'Menşe Belgesi Zorunluluğu',
-        description: 'Tercihli tarife uygulaması için gerekli olan menşe şahadetnamesi veya menşe beyanı belgesi sisteme yüklenmemiştir.',
-        severity: 'critical',
-        category: 'EUR.1 menşe belgesi gereklidir. Antlaşma kodu: BK (Birleşik Krallık). Etkilenen kalem adedi: 2. Potansiyel vergi farkı: ~8.500 TL.',
-        field: 'EUR.1',
-        suggestion: 'BK antlaşması kapsamındaki kalemler için menşe şahadetnamesi eksiktir.',
-        itemNumber: '1, 3'
+      id: "3",
+      severity: "info",
+      category: "AI Bildirimi",
+      message: "Belge İncelemesi",
+      description: "Benzer ithalatlarda ATR belgesi eksikliği görülmüştür.",
+      relatedItem: "Genel"
     },
     {
-        id: '4',
-        title: 'Döviz Kuru Farkı Analizi',
-        description: 'Beyanname tarihinde kullanılan döviz kuru ile TCMB güncel kuru arasında önemli fark tespit edilmiştir. Kur farkından kaynaklı vergi değişikliği olabilir.',
-        severity: 'warning',
-        category: 'Beyanname kuru: 34.15 TL/EUR. TCMB güncel kur: 36.25 TL/EUR. Fark oranı: %6.14. Potansiyel kıymet farkı: ~2.100 TL.',
-        field: 'Kur Farkı',
-        suggestion: 'Beyan tarihi ile güncel TCMB kuru arasında %5\'ten fazla fark bulunmaktadır.',
-        itemNumber: 'Genel'
-    },
+      id: "4",
+      severity: "critical",
+      category: "Vergi Uyumu",
+      message: "Hesaplanan vergi uyumsuz",
+      description: "Sistem tarafından hesaplanan vergi tutarı ile beyan edilen tutar arasında %5 fark var.",
+      relatedItem: "Genel"
+    }
+  ] as RiskFinding[],
+  beyannameBilgileri: {
+    alici: "ABC LTD. ŞTİ.",
+    gonderici: "XYZ GMBH",
+    beyanSahibi: "TEST GÜMRÜK MÜŞ.",
+    sevkUlkesi: "Almanya",
+    ticaretUlkesi: "Almanya",
+    cikisUlkesi: "Almanya",
+    kapadedi: 10,
+    teslimSekli: "DAP",
+    teslimYeri: "İSTANBUL",
+    aliciSaticiIliskisi: "Yok",
+    antrepo: "A3400"
+  },
+  faturaBilgileri: {
+    faturaBedeli: 15400.50,
+    kurTarihi: "12.03.2024",
+    dovizAlis: 34.15,
+    dovisSatis: 34.20,
+    odemeSekli: "Peşin",
+    banka: "Akbank",
+    sozlesme: "S-123",
+    odemeAraci: "Havale",
+    odemeYontemi: "SWIFT"
+  },
+  genelVergiBilgileri: {
+    toplamVergi: 2500.00,
+    pesinToplam: 1000.00,
+    teminatToplami: 1500.00
+  },
+  tasimaBilgileri: {
+    tasimaSekli: "Kara Yolu",
+    nakliyeciFirma: "Logistics Corp",
+    liman: "Ambarlı",
+    konteynerSayisi: 2,
+    sinirdakiAracTipi: "TIR",
+    sinirdakiAracKimligi: "34 ABC 123",
+    aracUlkeKodu: "TR",
+    cikistakiAracTipi: "TIR",
+    cikistakiAracKimligi: "34 ABC 123",
+    cikistakiAracUlkeKodu: "TR",
+    yuklemeBoşaltmaYeri: "İstanbul",
+    esyaninBulunduguYer: "Antrepo A",
+    girisGumruk: "Kapıkule",
+    cikisGumruk: "Kapıkule",
+    basitUsul: "Hayır"
+  },
+  yurtdisiTutarlar: {
+    komisyon: 0, demuraj: 0, royalti: 0, faiz: 0, gozetimKayitFarki: 0, navlun: 1000, sigorta: 50, fob: 14350.50, yurtdisiToplam: 1050
+  },
+  yurticiTutarlar: {
+    kkdf: 0, cevre: 0, tahliye: 0, liman: 0, banka: 0, depolama: 500, kultur: 0, diger: 0, bandrol: 0, gzammi: 0, kdvGider: 0
+  },
+  teminatBilgileri: [
     {
-        id: '5',
-        title: 'İstatistik Değeri Kontrolü',
-        description: 'Kalem istatistik değeri hesaplamasında tutarsızlık tespit edilmiştir. Miktar birimi ve değer bilgisi uyumsuzluğu bulunmaktadır.',
-        severity: 'info',
-        category: 'Beyan edilen miktar: 16.000 KG. İstatistik değeri girilmemiş. Birim değer kontrolü yapılamamıştır.',
-        field: 'İstatistik Değeri',
-        suggestion: 'Miktar birimi KGM olan kalemde istatistik değeri girilmemiş.',
-        itemNumber: '2'
-    },
+      teminatSekli: "Nakit",
+      tutari: 1500,
+      orani: 10,
+      sayisi: 1,
+      nakitTutar: 1500,
+      bankaTutari: 0
+    }
+  ],
+  kalemler: [
+    { siraNo: 1, gtip: "8471.30.00.00.00", kalemAciklamasi: "Dizüstü Bilgisayar", mense: "China", miktar: 10, birim: "Adet", brutAgirlik: 25.5, netAgirlik: 20.0, faturaBedeli: 10000, riskSayisi: 1 }
+  ] as KalemItem[],
+  kalemRiskleri: [
     {
-        id: '6',
-        title: 'Ödeme Belgesi Eksikliği',
-        description: 'Peşin ödeme şekli seçilmiş ancak ödeme dekont belgesi veya banka transfer belgesi sisteme yüklenmemiştir.',
-        severity: 'info',
-        category: 'Ödeme şekli: Peşin. Toplam tutar: 850.000 TL. Beklenen belge: Swift dekont veya banka transfer belgesi.',
-        field: 'Ödeme Dekontu',
-        suggestion: 'Ödeme dekontunu belge yönetiminden ekleyebilirsiniz.',
-        itemNumber: 'Genel'
-    },
-];
+      id: "r1",
+      kalemSiraNo: 1,
+      riskBaslik: "Kıymet Analizi",
+      oncelikDurumu: "medium",
+      riskKonu: "Referans fiyat sapması",
+      riskAciklama: "Beyan edilen kıymet referans kıymetin %10 altında."
+    }
+  ] as KalemRisk[]
+};
 
-interface Props {
-    declaration?: Declaration;
-}
+// --- Custom Components ---
 
-export default function DeclarationRisksTab({ declaration }: Props) {
-    // Fallback to mock if no declaration passed (or handle gracefully)
-    // We need to cast Declaration to ExtendedDeclaration or handle difference.
-    // Use the passed declaration field if available.
+export const NavigationSidebar = ({ items, activeKey, onChange }: any) => (
+  <div style={{ width: 250 }}>
+    <Menu 
+      mode="inline" 
+      selectedKeys={[activeKey]} 
+      onClick={(e) => onChange(e.key)}
+      items={items}
+      style={{ borderRight: 'none', background: 'transparent' }}
+      className="custom-sidebar-menu"
+    />
+    <style>
+      {`
+        .custom-sidebar-menu.ant-menu {
+          background: transparent !important;
+        }
+        .custom-sidebar-menu .ant-menu-item {
+          border-radius: 8px !important;
+          margin-bottom: 8px !important;
+          color: #595959 !important;
+          font-weight: 500 !important;
+          transition: all 0.3s ease !important;
+        }
+        .custom-sidebar-menu .ant-menu-item:hover {
+          color: #1677ff !important;
+          background: rgba(22, 119, 255, 0.04) !important;
+        }
+        .custom-sidebar-menu .ant-menu-item-selected {
+          color: #1677ff !important;
+          background: rgba(22, 119, 255, 0.1) !important;
+          font-weight: 600 !important;
+        }
+        .custom-sidebar-menu .ant-menu-item::after {
+          display: none !important;
+        }
+      `}
+    </style>
+  </div>
+);
 
-    // For now, let's use the passed declaration if available, or the mock one.
-    // If it's a B2C declaration (from our new list), it matches Declaration interface.
-    // The component currently expects ExtendedDeclaration for some fields (shippingInsurance, paidTaxes).
-    // We need to support the simpler Declaration interface too.
+export const InfoCard = ({ title, icon, iconColor, children }: { title: string, icon: ReactNode, iconColor: string, children: ReactNode }) => (
+  <Card 
+    title={<span style={{ display: 'flex', alignItems: 'center' }}>{React.cloneElement(icon as React.ReactElement, { style: { color: iconColor, marginRight: 8, fontSize: 18 } })} <span style={{ fontWeight: 600 }}>{title}</span></span>}
+    size="small" 
+    style={{ marginBottom: 16, borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
+    styles={{ body: { padding: 16 } }}
+  >
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px 0' }}>
+      {children}
+    </div>
+  </Card>
+);
 
-    const selectedDeclaration = (declaration as unknown as ExtendedDeclaration) || mockDeclarations[0];
-    const [activeTab, setActiveTab] = useState<'risks' | 'documents' | 'history'>('risks');
-    const [filterSeverity, setFilterSeverity] = useState<string>('all');
+export const InfoRow = ({ label, value, fullWidth }: { label: string, value: ReactNode, fullWidth?: boolean }) => (
+  <div style={{ display: 'flex', flexDirection: 'column', width: fullWidth ? '100%' : '50%', paddingRight: 16 }}>
+    <div style={{ fontSize: 12, color: '#8c8c8c', marginBottom: 4 }}>{label}</div>
+    <div style={{ fontSize: 14, fontWeight: 500, wordBreak: 'break-word', color: '#262626' }}>{value}</div>
+  </div>
+);
 
-    const filteredErrors = mockErrors.filter(error => {
-        if (filterSeverity === 'all') return true;
-        return error.severity === filterSeverity;
-    });
+const RiskCard: React.FC<{ risk: RiskFinding }> = ({ risk }) => {
+    const getIcon = () => {
+        switch (risk.severity) {
+            case 'critical': return <CloseCircleOutlined style={{ color: '#ff4d4f' }} />;
+            case 'warning': return <WarningOutlined style={{ color: '#faad14' }} />;
+            case 'info': return <InfoCircleOutlined style={{ color: '#722ed1' }} />; // Purple for AI/ML
+        }
+    };
 
-    const criticalCount = mockErrors.filter(e => e.severity === 'critical').length;
-    const warningCount = mockErrors.filter(e => e.severity === 'warning').length;
-    const infoCount = mockErrors.filter(e => e.severity === 'info').length;
+    const getColor = () => {
+        switch (risk.severity) {
+            case 'critical': return '#fff1f0';
+            case 'warning': return '#fffbe6';
+            case 'info': return '#f9f0ff'; // Purple background
+        }
+    };
 
-    const totalShippingTRY = selectedDeclaration.shippingInsurance?.reduce(
-        (sum: number, item: ShippingInsurance) => sum + item.totalInvoiceTRY,
-        0
-    ) || 0;
+    const getBorderColor = () => {
+        switch (risk.severity) {
+            case 'critical': return '#ffccc7';
+            case 'warning': return '#ffe58f';
+            case 'info': return '#d3adf7'; // Purple border
+        }
+    };
 
-    const totalPaidTaxes = selectedDeclaration.paidTaxes?.reduce(
-        (sum: number, tax: Tax) => sum + tax.calculatedTax,
-        0
-    ) || 0;
-
-    const isB2C = !!selectedDeclaration.waybillNo;
+    const getCategoryColor = () => {
+        switch (risk.severity) {
+            case 'critical': return '#ff4d4f';
+            case 'warning': return '#d48806'; // Darker yellow for text
+            case 'info': return '#722ed1';
+        }
+    };
 
     return (
-        <div className="space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <div className="flex items-center gap-3">
-                        <h1 className="text-3xl font-bold text-gray-900">
-                            {selectedDeclaration.declarationNumber || selectedDeclaration.no}
-                        </h1>
-                        <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold border border-blue-200">
-                            {selectedDeclaration.type || 'İthalat'}
-                        </span>
-                    </div>
-                    <p className="text-gray-600 mt-1">
-                        İstanbul Havaalimanı (ISL00) | {selectedDeclaration.date ? new Date(selectedDeclaration.date).toLocaleDateString('tr-TR') : '-'}
-                    </p>
-                </div>
-                <div className="flex items-center gap-3">
-                    <button className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all flex items-center gap-2 text-sm font-semibold text-gray-700">
-                        <DownloadOutlined className="w-4 h-4" />
-                        XML İndir
-                    </button>
-                </div>
+        <Card
+            size="small"
+            style={{
+                width: 320, 
+                minWidth: 320,
+                backgroundColor: getColor(),
+                borderColor: getBorderColor(),
+                borderRadius: 12,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+            }}
+            styles={{ body: { padding: 16 } }}
+        >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                {getIcon()}
+                <span style={{ fontSize: 15, fontWeight: 700, color: getCategoryColor() }}>
+                    {risk.category}
+                </span>
             </div>
-
-            {/* Tabs */}
-            <div className="border-b border-gray-200">
-                <nav className="flex gap-8">
-                    <button
-                        onClick={() => setActiveTab('risks')}
-                        className={`pb-4 px-2 border-b-2 font-medium text-sm transition-colors ${activeTab === 'risks'
-                            ? 'border-gray-900 text-gray-900'
-                            : 'border-transparent text-gray-500 hover:text-gray-700'
-                            }`}
-                    >
-                        Beyanname ve Riskler
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('documents')}
-                        className={`pb-4 px-2 border-b-2 font-medium text-sm transition-colors ${activeTab === 'documents'
-                            ? 'border-gray-900 text-gray-900'
-                            : 'border-transparent text-gray-500 hover:text-gray-700'
-                            }`}
-                    >
-                        Arşiv Dokümanları
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('history')}
-                        className={`pb-4 px-2 border-b-2 font-medium text-sm transition-colors ${activeTab === 'history'
-                            ? 'border-gray-900 text-gray-900'
-                            : 'border-transparent text-gray-500 hover:text-gray-700'
-                            }`}
-                    >
-                        İşlem Geçmişi
-                    </button>
-                </nav>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#262626', marginBottom: 8 }}>
+                {risk.message}
             </div>
-
-            {/* Content */}
-            {activeTab === 'risks' && (
+            <Paragraph ellipsis={{ rows: 3, expandable: true, symbol: 'more' }} style={{ marginBottom: 12, fontSize: 13, color: '#595959', lineHeight: '20px' }}>
+                {risk.description || risk.message}
+            </Paragraph>
+            {risk.relatedItem && (
                 <>
-                    {/* Stats Summary */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="bg-white rounded-xl border border-gray-200 p-6">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-red-50 rounded-lg flex items-center justify-center">
-                                    <CloseCircleOutlined className="w-6 h-6 text-red-600" />
-                                </div>
-                                <div>
-                                    <p className="text-sm text-gray-600 font-medium">Mutlak Risk</p>
-                                    <p className="text-3xl font-bold text-gray-900">{criticalCount}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white rounded-xl border border-gray-200 p-6">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-yellow-50 rounded-lg flex items-center justify-center">
-                                    <WarningOutlined className="w-6 h-6 text-yellow-600" />
-                                </div>
-                                <div>
-                                    <p className="text-sm text-gray-600 font-medium">Potansiyel Risk</p>
-                                    <p className="text-3xl font-bold text-gray-900">{warningCount}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white rounded-xl border border-gray-200 p-6">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center">
-                                    <InfoCircleOutlined className="w-6 h-6 text-purple-600" />
-                                </div>
-                                <div>
-                                    <p className="text-sm text-gray-600 font-medium">AI & ML</p>
-                                    <p className="text-3xl font-bold text-gray-900">{infoCount}</p>
-                                </div>
-                            </div>
-                        </div>
+                    <div style={{ width: '100%', height: 1, backgroundColor: 'rgba(0,0,0,0.06)', marginBottom: 8 }} />
+                    <div style={{ fontSize: 12, color: '#8c8c8c', marginBottom: 4 }}>
+                        Riski İçeren Kalem:
                     </div>
-
-                    {/* Main Content Grid */}
-                    <div className="grid grid-cols-12 gap-6">
-                        {/* Left Side - Blue Card + Sections */}
-                        <div className="col-span-12 lg:col-span-7 space-y-6">
-                            {/* Blue Declaration Card */}
-                            <div className="bg-gradient-to-br from-[#2563EB] via-[#1d4ed8] to-[#1e40af] rounded-xl p-6 shadow-lg">
-                                <div className="flex items-start justify-between mb-6">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-14 h-14 bg-white/15 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20">
-                                            <FileTextOutlined className="w-7 h-7 text-white" />
-                                        </div>
-                                        <div>
-                                            <h2 className="text-2xl font-bold text-white">
-                                                {selectedDeclaration.declarationNumber}
-                                            </h2>
-                                            <p className="text-blue-100 text-sm mt-1">Beyanname Detayları</p>
-                                        </div>
-                                    </div>
-                                    <button className="px-4 py-2 bg-white/20 backdrop-blur-md hover:bg-white/30 text-white rounded-lg border border-white/30 transition-all flex items-center gap-2 text-sm font-semibold">
-                                        <EyeOutlined className="w-4 h-4" />
-                                        Görüntüle
-                                    </button>
-                                </div>
-
-                                <div className="grid grid-cols-3 gap-4">
-                                    <div className="bg-white/10 backdrop-blur-md rounded-lg p-3 border border-white/20">
-                                        <p className="text-xs text-blue-100 font-medium mb-1">Tarih</p>
-                                        <p className="text-white font-bold text-sm">
-                                            {selectedDeclaration.date ? new Date(selectedDeclaration.date).toLocaleDateString('tr-TR') : '-'}
-                                        </p>
-                                    </div>
-                                    <div className="bg-white/10 backdrop-blur-md rounded-lg p-3 border border-white/20">
-                                        <p className="text-xs text-blue-100 font-medium mb-1">Teslim Şekli</p>
-                                        <p className="text-white font-bold text-sm">{selectedDeclaration.deliveryType || selectedDeclaration.incoterm || '-'}</p>
-                                    </div>
-                                    <div className="bg-white/10 backdrop-blur-md rounded-lg p-3 border border-white/20">
-                                        <p className="text-xs text-blue-100 font-medium mb-1">Ödeme</p>
-                                        <p className="text-white font-bold text-sm">{selectedDeclaration.paymentType || selectedDeclaration.paymentMethod || '-'}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Company InfoCircleOutlined / B2C Details */}
-                            {isB2C ? (
-                                <div className="grid grid-cols-3 gap-4">
-                                    <div className="bg-white rounded-xl border border-gray-200 p-4">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <div className="w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center">
-                                                <FileTextOutlined className="w-4 h-4 text-orange-600" />
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-gray-500 font-medium">Taşıma Senedi</p>
-                                                <p className="font-bold text-gray-900 text-sm">{selectedDeclaration.waybillNo}</p>
-                                            </div>
-                                        </div>
-                                        <p className="text-xs text-gray-600">{selectedDeclaration.marketplace}</p>
-                                    </div>
-
-                                    <div className="bg-white rounded-xl border border-gray-200 p-4">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
-                                                <InboxOutlined className="w-4 h-4 text-blue-600" />
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-gray-500 font-medium">Ağırlık Bilgisi</p>
-                                                <p className="font-bold text-gray-900 text-sm">
-                                                    {selectedDeclaration.grossWeight} / {selectedDeclaration.netWeight} KG
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <p className="text-xs text-gray-600">Brüt / Net</p>
-                                    </div>
-
-                                    <div className="bg-white rounded-xl border border-gray-200 p-4">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <div className="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center">
-                                                <DollarOutlined className="w-4 h-4 text-green-600" />
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-gray-500 font-medium">Toplam Vergi</p>
-                                                <p className="font-bold text-gray-900 text-sm">
-                                                    ₺{selectedDeclaration.totalTax?.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <p className="text-xs text-gray-600">{selectedDeclaration.packageCount || 0} Kap</p>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-3 gap-4">
-                                    <div className="bg-white rounded-xl border border-gray-200 p-4">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                                                <GlobalOutlined className="w-4 h-4 text-gray-700" />
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-gray-500 font-medium">Gönderici Ülke</p>
-                                                <p className="font-bold text-gray-900 text-sm">{typeof selectedDeclaration.sender === 'object' ? selectedDeclaration.sender.country : '-'}</p>
-                                            </div>
-                                        </div>
-                                        <p className="text-xs text-gray-600">{typeof selectedDeclaration.sender === 'object' ? selectedDeclaration.sender.name : selectedDeclaration.sender}</p>
-                                    </div>
-
-                                    <div className="bg-white rounded-xl border border-gray-200 p-4">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                                                <EnvironmentOutlined className="w-4 h-4 text-gray-700" />
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-gray-500 font-medium">Çıkış Ülkesi</p>
-                                                <p className="font-bold text-gray-900 text-sm">{selectedDeclaration.exitCountry || '-'}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="bg-white rounded-xl border border-gray-200 p-4">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                                                <SafetyOutlined className="w-4 h-4 text-gray-700" />
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-gray-500 font-medium">Rejim Kodu</p>
-                                                <p className="font-bold text-gray-900 text-sm">{selectedDeclaration.regime || selectedDeclaration.regimeCode}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Navlun & Sigorta + Ödenen Vergiler */}
-                            <div className="grid grid-cols-2 gap-6">
-                                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                                    <div className="p-4 border-b border-gray-200 bg-gray-50">
-                                        <div className="flex items-center gap-2">
-                                            <DollarOutlined className="w-5 h-5 text-gray-700" />
-                                            <h3 className="font-bold text-gray-900 text-sm">Navlun & Sigorta</h3>
-                                        </div>
-                                    </div>
-                                    <div className="p-4">
-                                        <div className="space-y-3 max-h-[240px] overflow-y-auto">
-                                            {(selectedDeclaration.shippingInsurance || []).slice(0, 2).map((item, index) => (
-                                                <div key={index} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                                    <div className="grid grid-cols-2 gap-2 text-xs">
-                                                        <div>
-                                                            <p className="text-gray-500 mb-1">Toplam Fatura</p>
-                                                            <p className="font-bold text-gray-900">
-                                                                ₺{item.totalInvoiceTRY.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
-                                                            </p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-gray-500 mb-1">PBC</p>
-                                                            <p className="font-bold text-gray-900">{item.pbc}</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-gray-500 mb-1">Navlun</p>
-                                                            <p className="font-semibold text-gray-700">
-                                                                ₺{item.shipping.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
-                                                            </p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-gray-500 mb-1">Sigorta</p>
-                                                            <p className="font-semibold text-gray-700">
-                                                                ₺{item.insurance.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                        <div className="mt-3 pt-3 border-t border-gray-200">
-                                            <div className="flex items-center justify-between">
-                                                <p className="text-xs font-semibold text-gray-600">Toplam (TRY)</p>
-                                                <p className="text-lg font-bold text-blue-600">
-                                                    ₺{totalShippingTRY.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                                    <div className="p-4 border-b border-gray-200 bg-gray-50">
-                                        <div className="flex items-center gap-2">
-                                            <ContainerOutlined className="w-5 h-5 text-gray-700" />
-                                            <h3 className="font-bold text-gray-900 text-sm">Ödenen Vergiler</h3>
-                                        </div>
-                                    </div>
-                                    <div className="p-4">
-                                        <div className="space-y-2">
-                                            {(selectedDeclaration.paidTaxes || []).slice(0, 2).map((tax, index) => (
-                                                <div key={index} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                                    <div className="flex items-center justify-between mb-2">
-                                                        <p className="font-semibold text-gray-900 text-xs">{tax.taxType}</p>
-                                                        <span className="px-2 py-0.5 bg-gray-200 text-gray-700 rounded text-xs font-bold">
-                                                            %{tax.rate}
-                                                        </span>
-                                                    </div>
-                                                    <div className="grid grid-cols-2 gap-2 text-xs">
-                                                        <div>
-                                                            <p className="text-gray-500 mb-1">Matrah</p>
-                                                            <p className="font-semibold text-gray-700">
-                                                                ₺{tax.base.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
-                                                            </p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-gray-500 mb-1">Hesaplanan</p>
-                                                            <p className="font-bold text-gray-900">
-                                                                ₺{tax.calculatedTax.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                        <div className="mt-3 pt-3 border-t border-gray-200">
-                                            <div className="flex items-center justify-between">
-                                                <p className="text-xs font-semibold text-gray-600">Toplam Vergi</p>
-                                                <p className="text-lg font-bold text-green-600">
-                                                    ₺{totalPaidTaxes.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Right Side - Error/Risk Cards */}
-                        <div className="col-span-12 lg:col-span-5">
-                            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                                <div className="p-4 border-b border-gray-200 bg-gray-50">
-                                    <div className="flex items-center justify-between w-full">
-                                        <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                                            <CloseCircleOutlined className="w-5 h-5 text-red-600" />
-                                            Risk Analizi ({mockErrors.length})
-                                        </h3>
-                                        <select
-                                            value={filterSeverity}
-                                            onChange={(e) => setFilterSeverity(e.target.value)}
-                                            className="text-xs border border-gray-300 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 font-medium"
-                                        >
-                                            <option value="all">Tümü</option>
-                                            <option value="critical">Mutlak Risk</option>
-                                            <option value="warning">Potansiyel Risk</option>
-                                            <option value="info">AI & ML</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div className="p-4 space-y-3 max-h-[calc(100vh-380px)] overflow-y-auto">
-                                    {filteredErrors.map((error, index) => {
-                                        const iconConfig = error.severity === 'critical'
-                                            ? {
-                                                icon: CloseCircleOutlined,
-                                                color: 'text-red-700',
-                                                bg: 'bg-red-50',
-                                                label: 'Mutlak Risk',
-                                                labelBg: 'bg-red-100 text-red-800 border-red-200',
-                                                cardBg: 'bg-red-50',
-                                                cardBorder: 'border-red-200',
-                                                cardHover: 'hover:border-red-300 hover:bg-red-100'
-                                            }
-                                            : error.severity === 'warning'
-                                                ? {
-                                                    icon: WarningOutlined,
-                                                    color: 'text-yellow-700',
-                                                    bg: 'bg-yellow-50',
-                                                    label: 'Potansiyel Risk',
-                                                    labelBg: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-                                                    cardBg: 'bg-yellow-50',
-                                                    cardBorder: 'border-yellow-200',
-                                                    cardHover: 'hover:border-yellow-300 hover:bg-yellow-100'
-                                                }
-                                                : {
-                                                    icon: InfoCircleOutlined,
-                                                    color: 'text-purple-700',
-                                                    bg: 'bg-purple-50',
-                                                    label: 'AI & ML Risk',
-                                                    labelBg: 'bg-purple-100 text-purple-800 border-purple-200',
-                                                    cardBg: 'bg-purple-50',
-                                                    cardBorder: 'border-purple-200',
-                                                    cardHover: 'hover:border-purple-300 hover:bg-purple-100'
-                                                };
-
-                                        const Icon = iconConfig.icon;
-
-                                        return (
-                                            <div
-                                                key={error.id}
-                                                className={`${iconConfig.cardBg} border-2 ${iconConfig.cardBorder} rounded-lg ${iconConfig.cardHover} transition-all shadow-sm`}
-                                            >
-                                                <div className="p-3">
-                                                    {/* Header */}
-                                                    <div className="flex items-start gap-2 mb-2">
-                                                        <div className={`w-9 h-9 bg-white rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm`}>
-                                                            <Icon className={`w-5 h-5 ${iconConfig.color}`} />
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <div className="flex items-start justify-between gap-2 mb-1.5">
-                                                                <h4 className="font-bold text-gray-900 text-xs leading-tight">
-                                                                    {error.title}
-                                                                </h4>
-                                                                <span className="text-[10px] text-gray-700 font-bold flex-shrink-0 bg-white px-1.5 py-0.5 rounded shadow-sm border border-gray-200">
-                                                                    Kalem: {error.itemNumber}
-                                                                </span>
-                                                            </div>
-                                                            <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold border ${iconConfig.labelBg}`}>
-                                                                {iconConfig.label}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Content */}
-                                                    <div className="space-y-1.5">
-                                                        <div className="bg-white/80 rounded-md p-2 border border-gray-200">
-                                                            <p className="text-[10px] font-bold text-gray-700 mb-1">KONU</p>
-                                                            <p className="text-[11px] text-gray-700 leading-relaxed">{error.description}</p>
-                                                        </div>
-
-                                                        <div className="bg-white/80 rounded-md p-2 border border-gray-200">
-                                                            <p className="text-[10px] font-bold text-gray-700 mb-1">DEĞER</p>
-                                                            <p className="text-[11px] text-gray-700 leading-relaxed">{error.category}</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        </div>
+                    <div style={{ display: 'inline-block', border: `1px solid ${getCategoryColor()}`, borderRadius: 4, padding: '2px 8px', fontSize: 13, fontWeight: 600, color: getCategoryColor(), backgroundColor: 'rgba(255,255,255,0.6)' }}>
+                        {risk.relatedItem}
                     </div>
                 </>
             )}
-
-            {/* Items List Section (New) */}
-            {activeTab === 'risks' && declaration?.items && declaration.items.length > 0 && (
-                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mt-6">
-                    <div className="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                            <InboxOutlined className="w-5 h-5 text-gray-700" />
-                            <h3 className="font-bold text-gray-900 text-sm">Kalem Listesi</h3>
-                        </div>
-                        <span className="text-xs font-semibold text-gray-500 bg-white px-2 py-1 rounded border border-gray-200">
-                            {declaration.items.length} Kalem
-                        </span>
-                    </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm text-gray-600">
-                            <thead className="bg-gray-50 text-xs uppercase font-semibold text-gray-700">
-                                <tr>
-                                    <th className="px-4 py-3">Kalem No</th>
-                                    <th className="px-4 py-3">GTİP</th>
-                                    <th className="px-4 py-3">Açıklama</th>
-                                    <th className="px-4 py-3 text-right">Fatura Tutarı</th>
-                                    <th className="px-4 py-3 text-right">İstatistiki Kıymet</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {declaration.items.map((item, idx) => (
-                                    <tr key={idx} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-4 py-3 font-medium text-gray-900">{item.itemNo}</td>
-                                        <td className="px-4 py-3 font-mono">{item.hsCode}</td>
-                                        <td className="px-4 py-3">{item.description || '-'}</td>
-                                        <td className="px-4 py-3 text-right font-medium">
-                                            {item.totalPrice?.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} {item.currency}
-                                        </td>
-                                        <td className="px-4 py-3 text-right text-gray-500">
-                                            {item.statisticalValue?.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            )}
-
-            {activeTab === 'documents' && (
-                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                    <div className="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                            <FileTextOutlined className="w-5 h-5 text-gray-700" />
-                            <h3 className="font-bold text-gray-900 text-sm">Arşiv Dokümanları</h3>
-                        </div>
-                        <span className="text-xs font-semibold text-gray-500 bg-white px-2 py-1 rounded border border-gray-200">
-                            {declarationFiles.length} Dosya
-                        </span>
-                    </div>
-                    <div className="divide-y divide-gray-100">
-                        {declarationFiles.map((file) => (
-                            <div key={file.id} className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between group">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center">
-                                        <FileTextOutlined className="w-5 h-5 text-red-600" />
-                                    </div>
-                                    <div>
-                                        <h4 className="font-semibold text-gray-900 text-sm">{file.name}</h4>
-                                        <div className="flex items-center gap-2 mt-0.5">
-                                            <span className="text-xs text-gray-500">{file.type}</span>
-                                            <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                                            <span className="text-xs text-gray-400">{file.size}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
-                                        <EyeOutlined className="w-4 h-4" />
-                                    </button>
-                                    <button className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all">
-                                        <DownloadOutlined className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {activeTab === 'history' && (
-                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                    <div className="p-4 border-b border-gray-200 bg-gray-50">
-                        <div className="flex items-center gap-2">
-                            <RiseOutlined className="w-5 h-5 text-gray-700" />
-                            <h3 className="font-bold text-gray-900 text-sm">İşlem Geçmişi</h3>
-                        </div>
-                    </div>
-                    <div className="p-6">
-                        <div className="relative space-y-8 before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-300 before:to-transparent">
-                            <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                                <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-300 group-[.is-active]:bg-emerald-500 group-[.is-active]:text-emerald-50 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
-                                    <CarOutlined className="w-5 h-5 text-white" />
-                                </div>
-                                <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                                    <div className="flex items-center justify-between space-x-2 mb-1">
-                                        <div className="font-bold text-slate-900">İntaç Bekleniyor</div>
-                                        <time className="font-caveat font-medium text-amber-500">İşlemde</time>
-                                    </div>
-                                    <div className="text-slate-500">Gümrük işlemleri devam ediyor...</div>
-                                </div>
-                            </div>
-                            <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                                <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-300 group-[.is-active]:bg-blue-500 group-[.is-active]:text-blue-50 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
-                                    <ContainerOutlined className="w-5 h-5 text-white" />
-                                </div>
-                                <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                                    <div className="flex items-center justify-between space-x-2 mb-1">
-                                        <div className="font-bold text-slate-900">TPS Başvurusu Yapıldı</div>
-                                        <time className="font-caveat font-medium text-slate-500">15:00</time>
-                                    </div>
-                                    <div className="text-slate-500">Operasyon Uzmanı tarafından başvuru tamamlandı.</div>
-                                </div>
-                            </div>
-                            <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                                <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-300 group-[.is-active]:bg-amber-500 group-[.is-active]:text-amber-50 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
-                                    <WarningOutlined className="w-5 h-5 text-white" />
-                                </div>
-                                <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                                    <div className="flex items-center justify-between space-x-2 mb-1">
-                                        <div className="font-bold text-slate-900">Riskler Tespit Edildi</div>
-                                        <time className="font-caveat font-medium text-slate-500">14:36</time>
-                                    </div>
-                                    <div className="text-slate-500">Customs X-ray AI tarafından potansiyel riskler belirlendi.</div>
-                                </div>
-                            </div>
-                            <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                                <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-300 group-[.is-active]:bg-green-500 group-[.is-active]:text-green-50 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
-                                    <CheckCircleOutlined className="w-5 h-5 text-white" />
-                                </div>
-                                <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                                    <div className="flex items-center justify-between space-x-2 mb-1">
-                                        <div className="font-bold text-slate-900">Beyanname Oluşturuldu</div>
-                                        <time className="font-caveat font-medium text-slate-500">14:30</time>
-                                    </div>
-                                    <div className="text-slate-500">Sistem tarafından otomatik kayıt açıldı.</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </div>
+        </Card>
     );
+};
+
+export const RiskCardsScroller: React.FC<{ riskFindings: RiskFinding[] }> = ({ riskFindings }) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [showLeftButton, setShowLeftButton] = useState(false);
+  const [showRightButton, setShowRightButton] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!scrollRef.current) return;
+      const scrollContainer = scrollRef.current;
+      let startTime: number | null = null;
+      const duration = 2000;
+      const distance = 150;
+      const animate = (timestamp: number) => {
+        if (!startTime) startTime = timestamp;
+        const elapsed = timestamp - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const easeInOutCubic = (t: number) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        const scrollPosition = distance * easeInOutCubic(progress);
+        scrollContainer.scrollLeft = scrollPosition;
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          setTimeout(() => { scrollContainer.scrollTo({ left: 0, behavior: 'smooth' }); }, 500);
+        }
+      };
+      requestAnimationFrame(animate);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const checkScrollButtons = () => {
+    if (!scrollRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+    setShowLeftButton(scrollLeft > 10);
+    setShowRightButton(scrollLeft < scrollWidth - clientWidth - 10);
+  };
+
+  useEffect(() => {
+    const scrollContainer = scrollRef.current;
+    if (!scrollContainer) return;
+    checkScrollButtons();
+    scrollContainer.addEventListener('scroll', checkScrollButtons);
+    window.addEventListener('resize', checkScrollButtons);
+    return () => {
+      scrollContainer.removeEventListener('scroll', checkScrollButtons);
+      window.removeEventListener('resize', checkScrollButtons);
+    };
+  }, []);
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (!scrollRef.current) return;
+    const scrollAmount = 360;
+    const newScrollLeft = scrollRef.current.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
+    scrollRef.current.scrollTo({ left: newScrollLeft, behavior: 'smooth' });
+  };
+
+  return (
+    <Card 
+      size="small"
+      style={{ marginBottom: 16, position: 'relative', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
+      title={
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <WarningOutlined style={{ color: '#ff4d4f', fontSize: 18 }} />
+          <span style={{ fontSize: 16, fontWeight: 600 }}>
+            Risk Analiz Bulguları ({riskFindings.length})
+          </span>
+        </div>
+      }
+    >
+      <div style={{ position: 'relative' }}>
+        {showLeftButton && (
+          <Button
+            type="primary" shape="circle" icon={<LeftOutlined />} onClick={() => scroll('left')}
+            className="scroll-button-breathing"
+            style={{ position: 'absolute', left: -12, top: '50%', transform: 'translateY(-50%)', zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+          />
+        )}
+        {showRightButton && (
+          <Button
+            type="primary" shape="circle" icon={<RightOutlined />} onClick={() => scroll('right')}
+            className="scroll-button-breathing"
+            style={{ position: 'absolute', right: -12, top: '50%', transform: 'translateY(-50%)', zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+          />
+        )}
+        {showLeftButton && (
+          <div style={{ position: 'absolute', left: 0, top: 0, bottom: 8, width: 60, background: 'linear-gradient(to right, rgba(255,255,255,1), rgba(255,255,255,0))', zIndex: 5, pointerEvents: 'none' }} />
+        )}
+        {showRightButton && (
+          <div style={{ position: 'absolute', right: 0, top: 0, bottom: 8, width: 100, background: 'linear-gradient(to left, rgba(255,255,255,1) 10%, rgba(255,255,255,0))', zIndex: 5, pointerEvents: 'none' }} />
+        )}
+        <div
+          ref={scrollRef}
+          style={{ display: 'flex', gap: 16, overflowX: 'auto', overflowY: 'hidden', paddingBottom: 8, scrollBehavior: 'smooth', scrollbarWidth: 'thin', scrollbarColor: '#1677ff #f0f0f0', WebkitOverflowScrolling: 'touch', position: 'relative' }}
+          className="risk-cards-scroller"
+        >
+          {riskFindings.map(risk => (
+            <RiskCard key={risk.id} risk={risk} />
+          ))}
+        </div>
+      </div>
+      <style>
+        {`
+          .risk-cards-scroller::-webkit-scrollbar { height: 8px; }
+          .risk-cards-scroller::-webkit-scrollbar-track { background: #f0f0f0; border-radius: 4px; }
+          .risk-cards-scroller::-webkit-scrollbar-thumb { background: #1677ff; border-radius: 4px; }
+          .risk-cards-scroller::-webkit-scrollbar-thumb:hover { background: #0958d9; }
+          @keyframes breathing {
+            0%, 100% { transform: translateY(-50%) scale(1); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+            50% { transform: translateY(-50%) scale(1.08); box-shadow: 0 6px 20px rgba(22, 119, 255, 0.4); }
+          }
+          .scroll-button-breathing { animation: breathing 2s ease-in-out infinite; }
+          .scroll-button-breathing:hover { animation: none; }
+        `}
+      </style>
+    </Card>
+  );
+};
+
+// --- Main Page ---
+
+export default function DeclarationRisksTab({ declaration }: { declaration?: any }) {
+  const [activeMainTab, setActiveMainTab] = useState('beyanname-riskler');
+  const [activeSubTab, setActiveSubTab] = useState('beyanname');
+
+  const data = mockBeyanameDetay;
+
+  const kalemColumns: ColumnsType<KalemItem> = [
+    { title: 'Sıra', dataIndex: 'siraNo', key: 'siraNo', width: 70, align: 'center', render: (no) => <strong>{no}</strong> },
+    { title: 'GTİP', dataIndex: 'gtip', key: 'gtip', width: 160, render: (gtip) => <span style={{ fontFamily: 'monospace', fontSize: 12 }}>{gtip}</span> },
+    { title: 'Kalem Açıklaması', dataIndex: 'kalemAciklamasi', key: 'kalemAciklamasi', ellipsis: true },
+    { title: 'Menşe', dataIndex: 'mense', key: 'mense', width: 100 },
+    { title: 'Miktar', dataIndex: 'miktar', key: 'miktar', width: 90, align: 'right', render: (miktar, record) => `${miktar} ${record.birim}` },
+    { title: 'Brüt (kg)', dataIndex: 'brutAgirlik', key: 'brutAgirlik', width: 100, align: 'right', render: (agirlik) => agirlik.toFixed(2) },
+    { title: 'Net (kg)', dataIndex: 'netAgirlik', key: 'netAgirlik', width: 100, align: 'right', render: (agirlik) => agirlik.toFixed(2) },
+    { title: 'Fatura Bedeli', dataIndex: 'faturaBedeli', key: 'faturaBedeli', width: 130, align: 'right', render: (bedel) => `$${bedel.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}` },
+    { title: 'Risk', dataIndex: 'riskSayisi', key: 'riskSayisi', width: 80, align: 'center', render: (riskSayisi) => (riskSayisi > 0 ? <Badge count={riskSayisi} showZero style={{ backgroundColor: '#ff4d4f' }} /> : <Tag color="success">Temiz</Tag>) }
+  ];
+
+  const kalemRiskColumns: ColumnsType<KalemRisk> = [
+    { title: 'Kalem No', dataIndex: 'kalemSiraNo', key: 'kalemSiraNo', width: 90, align: 'center' },
+    { title: 'Risk Başlık', dataIndex: 'riskBaslik', key: 'riskBaslik', width: 200 },
+    { title: 'Konu', dataIndex: 'riskKonu', key: 'riskKonu', width: 180 },
+    { title: 'Açıklama', dataIndex: 'riskAciklama', key: 'riskAciklama', ellipsis: true },
+    { title: 'Öncelik', dataIndex: 'oncelikDurumu', key: 'oncelikDurumu', width: 100, align: 'center', render: (oncelik) => {
+        const config = { high: { color: 'error', text: 'Yüksek' }, medium: { color: 'warning', text: 'Orta' }, low: { color: 'default', text: 'Düşük' } };
+        return <Tag color={config[oncelik as keyof typeof config]?.color || 'default'}>{config[oncelik as keyof typeof config]?.text || oncelik}</Tag>;
+    } }
+  ];
+
+  return (
+    <div style={{ padding: 24, backgroundColor: '#f0f2f5', minHeight: '100vh' }}>
+      <Card 
+        style={{ marginBottom: 24, background: 'linear-gradient(135deg, #1677ff 0%, #0958d9 100%)', border: 'none', borderRadius: 12 }}
+        styles={{ body: { padding: 20 } }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', marginBottom: 6 }}>
+              Beyanname Numarası
+            </div>
+            <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, color: '#fff', letterSpacing: '-0.5px' }}>
+              IM20260000000001
+            </h1>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <Tag color="warning" style={{ fontSize: 13, padding: '4px 12px', margin: 0, border: 'none' }}>
+              {data.durum}
+            </Tag>
+            <Button type="default" icon={<DownloadOutlined />} style={{ borderRadius: 6, fontWeight: 500 }}>
+              İndir
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+        <NavigationSidebar
+          items={[
+            { key: 'beyanname-riskler', label: 'Beyanname ve Riskler' },
+            { key: 'arsiv', label: 'Arşiv' },
+            { key: 'islem-gecmisi', label: 'İşlem Geçmişi' },
+            { key: 'ekstra-veri', label: 'Ekstra Veri' },
+            { key: 'referans-islemleri', label: 'Referans İşlemleri' }
+          ]}
+          activeKey={activeMainTab}
+          onChange={setActiveMainTab}
+        />
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {activeMainTab === 'beyanname-riskler' && (
+            <Tabs activeKey={activeSubTab} onChange={setActiveSubTab} size="large" style={{ backgroundColor: '#fff', padding: '12px 16px 0', borderRadius: 8 }}>
+              <TabPane tab="📋 Beyanname" key="beyanname">
+                <div style={{ marginTop: 16 }}>
+                  <InfoCard title="Beyanname Kapak Bilgileri" icon={<FileTextOutlined />} iconColor="#1677ff">
+                    <InfoRow label="Rejim" value={data.coverInfo.rejim} />
+                    <InfoRow label="Toplam Risk Sayısı" value={<Badge count={data.coverInfo.toplamRiskSayisi} showZero style={{ backgroundColor: '#ff4d4f' }} />} />
+                    <InfoRow label="A Gümrük" value={data.coverInfo.agumruk} />
+                    <InfoRow label="Çıkış Gümrüğü" value={data.coverInfo.cikisGumruk} />
+                    <InfoRow label="Belgeler" value={<div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>{data.coverInfo.belgeler.map((belge, idx) => <Tag key={idx} color="blue">{belge}</Tag>)}</div>} fullWidth />
+                  </InfoCard>
+
+                  {/* PRESERVED SCROLLER FOR RISK BULGULARI */}
+                  <RiskCardsScroller riskFindings={data.beyanameRiskleri} />
+
+                  <InfoCard title="Beyanname Bilgileri" icon={<ShoppingOutlined />} iconColor="#52c41a">
+                    <InfoRow label="Alıcı" value={data.beyannameBilgileri.alici} fullWidth />
+                    <InfoRow label="Gönderici" value={data.beyannameBilgileri.gonderici} fullWidth />
+                    <InfoRow label="Beyan Sahibi" value={data.beyannameBilgileri.beyanSahibi} />
+                    <InfoRow label="Sevk Ülkesi" value={data.beyannameBilgileri.sevkUlkesi} />
+                    <InfoRow label="Ticaret Ülkesi" value={data.beyannameBilgileri.ticaretUlkesi} />
+                    <InfoRow label="Çıkış Ülkesi" value={data.beyannameBilgileri.cikisUlkesi} />
+                    <InfoRow label="Kapadedi" value={data.beyannameBilgileri.kapadedi} />
+                    <InfoRow label="Teslim Şekli" value={data.beyannameBilgileri.teslimSekli} />
+                    <InfoRow label="Teslim Yeri" value={data.beyannameBilgileri.teslimYeri} />
+                    <InfoRow label="Alıcı-Satıcı İlişkisi" value={data.beyannameBilgileri.aliciSaticiIliskisi} />
+                    <InfoRow label="Antrepo" value={data.beyannameBilgileri.antrepo} />
+                  </InfoCard>
+
+                  <InfoCard title="Fatura Bilgileri" icon={<DollarOutlined />} iconColor="#13c2c2">
+                    <InfoRow label="Fatura Bedeli" value={<strong style={{ color: '#52c41a', fontSize: 16 }}>${data.faturaBilgileri.faturaBedeli.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</strong>} />
+                    <InfoRow label="Kur Tarihi" value={data.faturaBilgileri.kurTarihi} />
+                    <InfoRow label="Döviz Alış" value={`₺${data.faturaBilgileri.dovizAlis}`} />
+                    <InfoRow label="Döviz Satış" value={`₺${data.faturaBilgileri.dovisSatis}`} />
+                    <InfoRow label="Ödeme Şekli" value={data.faturaBilgileri.odemeSekli} />
+                    <InfoRow label="Banka" value={data.faturaBilgileri.banka} />
+                    <InfoRow label="Sözleşme" value={data.faturaBilgileri.sozlesme} />
+                    <InfoRow label="Ödeme Aracı" value={data.faturaBilgileri.odemeAraci} />
+                    <InfoRow label="Ödeme Yöntemi" value={data.faturaBilgileri.odemeYontemi} />
+                  </InfoCard>
+
+                  <InfoCard title="Genel Vergi Bilgileri" icon={<BankOutlined />} iconColor="#722ed1">
+                    <Row gutter={16} style={{ width: '100%' }}>
+                      <Col xs={24} sm={8}>
+                        <Statistic title="Toplam Vergi" value={data.genelVergiBilgileri.toplamVergi} precision={2} prefix="₺" valueStyle={{ color: '#ff4d4f' }} />
+                      </Col>
+                      <Col xs={24} sm={8}>
+                        <Statistic title="Peşin Toplam" value={data.genelVergiBilgileri.pesinToplam} precision={2} prefix="₺" valueStyle={{ color: '#1677ff' }} />
+                      </Col>
+                      <Col xs={24} sm={8}>
+                        <Statistic title="Teminat Toplamı" value={data.genelVergiBilgileri.teminatToplami} precision={2} prefix="₺" valueStyle={{ color: '#faad14' }} />
+                      </Col>
+                    </Row>
+                  </InfoCard>
+
+                  <InfoCard title="Taşıma Bilgileri" icon={<CarOutlined />} iconColor="#fa8c16">
+                    <InfoRow label="Taşıma Şekli" value={data.tasimaBilgileri.tasimaSekli} />
+                    <InfoRow label="Nakliyeci Firma" value={data.tasimaBilgileri.nakliyeciFirma} />
+                    <InfoRow label="Liman" value={data.tasimaBilgileri.liman} />
+                    <InfoRow label="Konteyner Sayısı" value={data.tasimaBilgileri.konteynerSayisi} />
+                    <InfoRow label="Sınırdaki Araç Tipi" value={data.tasimaBilgileri.sinirdakiAracTipi} />
+                    <InfoRow label="Sınırdaki Araç Kimliği" value={data.tasimaBilgileri.sinirdakiAracKimligi} />
+                    <InfoRow label="Araç Ülke Kodu" value={data.tasimaBilgileri.aracUlkeKodu} />
+                    <InfoRow label="Çıkıştaki Araç Tipi" value={data.tasimaBilgileri.cikistakiAracTipi} />
+                    <InfoRow label="Çıkıştaki Araç Kimliği" value={data.tasimaBilgileri.cikistakiAracKimligi} />
+                    <InfoRow label="Çıkıştaki Araç Ülke Kodu" value={data.tasimaBilgileri.cikistakiAracUlkeKodu} />
+                    <InfoRow label="Yükleme/Boşaltma Yeri" value={data.tasimaBilgileri.yuklemeBoşaltmaYeri} fullWidth />
+                    <InfoRow label="Eşyanın Bulunduğu Yer" value={data.tasimaBilgileri.esyaninBulunduguYer} />
+                    <InfoRow label="Giriş Gümrük" value={data.tasimaBilgileri.girisGumruk} />
+                    <InfoRow label="Çıkış Gümrük" value={data.tasimaBilgileri.cikisGumruk} />
+                    <InfoRow label="Basit Usül" value={data.tasimaBilgileri.basitUsul} />
+                  </InfoCard>
+
+                  <Row gutter={16} style={{ marginBottom: 16 }}>
+                    <Col xs={24} md={12}>
+                      <Card title="💱 Yurtdışı Tutarlar" size="small" style={{ borderRadius: 12 }}>
+                        <Descriptions bordered size="small" column={1}>
+                          <Descriptions.Item label="Komisyon">${data.yurtdisiTutarlar.komisyon.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</Descriptions.Item>
+                          <Descriptions.Item label="Demuraj">${data.yurtdisiTutarlar.demuraj.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</Descriptions.Item>
+                          <Descriptions.Item label="Royalti">${data.yurtdisiTutarlar.royalti.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</Descriptions.Item>
+                          <Descriptions.Item label="Faiz">${data.yurtdisiTutarlar.faiz.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</Descriptions.Item>
+                          <Descriptions.Item label="Gözetim Kayıt Farkı">${data.yurtdisiTutarlar.gozetimKayitFarki.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</Descriptions.Item>
+                          <Descriptions.Item label="Navlun">${data.yurtdisiTutarlar.navlun.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</Descriptions.Item>
+                          <Descriptions.Item label="Sigorta">${data.yurtdisiTutarlar.sigorta.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</Descriptions.Item>
+                          <Descriptions.Item label="FOB">${data.yurtdisiTutarlar.fob.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</Descriptions.Item>
+                          <Descriptions.Item label="Yurtdışı Toplam"><strong style={{ color: '#1677ff', fontSize: 15 }}>${data.yurtdisiTutarlar.yurtdisiToplam.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</strong></Descriptions.Item>
+                        </Descriptions>
+                      </Card>
+                    </Col>
+                    <Col xs={24} md={12}>
+                      <Card title="🏦 Yurtiçi Tutarlar" size="small" style={{ borderRadius: 12 }}>
+                        <Descriptions bordered size="small" column={1}>
+                          <Descriptions.Item label="KKDF">₺{data.yurticiTutarlar.kkdf.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</Descriptions.Item>
+                          <Descriptions.Item label="Çevre">₺{data.yurticiTutarlar.cevre.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</Descriptions.Item>
+                          <Descriptions.Item label="Tahliye">₺{data.yurticiTutarlar.tahliye.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</Descriptions.Item>
+                          <Descriptions.Item label="Liman">₺{data.yurticiTutarlar.liman.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</Descriptions.Item>
+                          <Descriptions.Item label="Banka">₺{data.yurticiTutarlar.banka.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</Descriptions.Item>
+                          <Descriptions.Item label="Depolama">₺{data.yurticiTutarlar.depolama.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</Descriptions.Item>
+                          <Descriptions.Item label="Kültür">₺{data.yurticiTutarlar.kultur.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</Descriptions.Item>
+                          <Descriptions.Item label="Diğer">₺{data.yurticiTutarlar.diger.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</Descriptions.Item>
+                          <Descriptions.Item label="Bandrol">₺{data.yurticiTutarlar.bandrol.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</Descriptions.Item>
+                          <Descriptions.Item label="G.Zammı">₺{data.yurticiTutarlar.gzammi.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</Descriptions.Item>
+                          <Descriptions.Item label="KDV Gider">₺{data.yurticiTutarlar.kdvGider.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</Descriptions.Item>
+                        </Descriptions>
+                      </Card>
+                    </Col>
+                  </Row>
+
+                  <Card title={<span><SafetyOutlined style={{ marginRight: 8 }} />Teminat Bilgileri</span>} size="small" style={{ marginBottom: 16, borderRadius: 12 }}>
+                    {data.teminatBilgileri.map((teminat, index) => (
+                      <Card key={index} type="inner" title={`Teminat ${index + 1}: ${teminat.teminatSekli}`} size="small" style={{ marginBottom: index < data.teminatBilgileri.length - 1 ? 12 : 0 }}>
+                        <Descriptions bordered size="small" column={{ xs: 1, sm: 2, md: 3 }}>
+                          <Descriptions.Item label="Tutarı">₺{teminat.tutari.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</Descriptions.Item>
+                          <Descriptions.Item label="Oranı">%{teminat.orani}</Descriptions.Item>
+                          <Descriptions.Item label="Sayısı">{teminat.sayisi}</Descriptions.Item>
+                          <Descriptions.Item label="Nakit Tutar">₺{teminat.nakitTutar.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</Descriptions.Item>
+                          <Descriptions.Item label="Banka Tutarı">₺{teminat.bankaTutari.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</Descriptions.Item>
+                        </Descriptions>
+                      </Card>
+                    ))}
+                  </Card>
+
+                  <Card title={<span><FileTextOutlined style={{ marginRight: 8 }} />Kalemler Listesi</span>} size="small" style={{ borderRadius: 12 }}>
+                    <Table columns={kalemColumns} dataSource={data.kalemler} rowKey="siraNo" pagination={false} size="small" scroll={{ x: 1200 }} />
+                  </Card>
+                </div>
+              </TabPane>
+
+              <TabPane tab="📦 Kalem" key="kalem">
+                <div style={{ marginTop: 16 }}>
+                  <Card title={<span><WarningOutlined style={{ marginRight: 8, color: '#ff4d4f' }} />Kalem Riskleri ({data.kalemRiskleri.length})</span>} size="small" style={{ marginBottom: 16 }}>
+                    <Table columns={kalemRiskColumns} dataSource={data.kalemRiskleri} rowKey="id" pagination={{ pageSize: 10 }} size="small" scroll={{ x: 900 }} />
+                  </Card>
+                  <Card title={<span><FileTextOutlined style={{ marginRight: 8 }} />Kalem Detayları</span>} size="small">
+                    <Table 
+                      columns={kalemColumns} dataSource={data.kalemler} rowKey="siraNo" pagination={false} size="small" scroll={{ x: 1200 }}
+                      expandable={{
+                        expandedRowRender: (record) => {
+                          const kalemRiskleri = data.kalemRiskleri.filter(r => r.kalemSiraNo === record.siraNo);
+                          return (
+                            <div style={{ padding: '12px 24px' }}>
+                              <h4 style={{ marginBottom: 12, color: '#1677ff' }}>Bu Kaleme Ait Riskler ({kalemRiskleri.length})</h4>
+                              {kalemRiskleri.length > 0 ? (
+                                kalemRiskleri.map((risk) => (
+                                  <Card key={risk.id} size="small" type="inner" style={{ marginBottom: 8 }} title={<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span>{risk.riskBaslik}</span><Tag color={risk.oncelikDurumu === 'high' ? 'error' : risk.oncelikDurumu === 'medium' ? 'warning' : 'default'}>{risk.oncelikDurumu === 'high' ? 'Yüksek' : risk.oncelikDurumu === 'medium' ? 'Orta' : 'Düşük'}</Tag></div>}>
+                                    <p style={{ margin: 0, marginBottom: 8 }}><strong>Konu:</strong> {risk.riskKonu}</p>
+                                    <p style={{ margin: 0 }}><strong>Açıklama:</strong> {risk.riskAciklama}</p>
+                                  </Card>
+                                ))
+                              ) : <Tag color="success">Bu kalemde risk bulunmamaktadır</Tag>}
+                            </div>
+                          );
+                        }
+                      }}
+                    />
+                  </Card>
+                </div>
+              </TabPane>
+            </Tabs>
+          )}
+
+          {activeMainTab === 'arsiv' && (
+            <Card size="small" style={{ marginTop: 16 }}>
+              <p style={{ textAlign: 'center', color: '#8c8c8c', padding: 40 }}>Arşiv içeriği yakında eklenecektir.</p>
+            </Card>
+          )}
+
+          {activeMainTab === 'islem-gecmisi' && (
+            <Card size="small" style={{ marginTop: 16 }}>
+              <p style={{ textAlign: 'center', color: '#8c8c8c', padding: 40 }}>İşlem geçmişi içeriği yakında eklenecektir.</p>
+            </Card>
+          )}
+
+          {activeMainTab === 'ekstra-veri' && (
+            <Card size="small" style={{ marginTop: 16 }}>
+              <p style={{ textAlign: 'center', color: '#8c8c8c', padding: 40 }}>Ekstra veri içeriği yakında eklenecektir.</p>
+            </Card>
+          )}
+
+          {activeMainTab === 'referans-islemleri' && (
+            <Card size="small" style={{ marginTop: 16 }}>
+              <p style={{ textAlign: 'center', color: '#8c8c8c', padding: 40 }}>Referans işlemleri içeriği yakında eklenecektir.</p>
+            </Card>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
