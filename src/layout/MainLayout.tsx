@@ -10,6 +10,7 @@ import {
   TeamOutlined,
   AppstoreOutlined,
   SettingOutlined,
+  BookOutlined,
 } from '@ant-design/icons'
 import { usePathname, useRouter } from 'next/navigation'
 import Header from '@/components/layout/Header'
@@ -48,6 +49,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       key: '/declarations',
       label: 'Beyanname Listesi',
       icon: <FileTextOutlined />,
+    },
+    {
+      key: '/risk-kutuphanesi',
+      label: 'Risk Kütüphanesi',
+      icon: <BookOutlined />,
     },
   ]
 
