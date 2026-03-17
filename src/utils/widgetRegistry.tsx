@@ -10,9 +10,12 @@ import {
     CalendarOutlined,
     RiseOutlined,
     FallOutlined,
-    AppstoreOutlined
+    AppstoreOutlined,
+    ClockCircleOutlined,
+    UserOutlined
 } from '@ant-design/icons';
 import { Button, Dropdown, Tooltip as AntdTooltip } from 'antd';
+import { TopGtipWidget } from '@/components/dashboard/TopGtipWidget';
 
 // ... (previous components)
 
@@ -42,7 +45,7 @@ export const FindingSubjectSummaryComponent = ({ isDarkMode, borderClass, textCl
     ];
 
     return (
-        <div className={`p-8 rounded-[24px] border border-gray-100 bg-white h-full flex flex-col shadow-sm overflow-hidden`}>
+        <div className={`p-8 rounded-[8px] border border-gray-100 bg-white h-full flex flex-col shadow-sm overflow-hidden`}>
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
                 <h3 className="font-bold text-[18px] text-gray-900">Bulgu Konu Özeti</h3>
@@ -99,30 +102,26 @@ export const PastelCardComponent = ({
     isDarkMode,
     colSpan = 1
 }: any) => {
-    // 3x and 4x use horizontal layout
-    const isWide = colSpan >= 3;
-
-    // Layout matches the provided image: Vertical stack
-    // Icon Top-Left, Menu Top-Right
-    // Title, Value, Subtext stacked below
 
     return (
-        <div className={`p-6 rounded-[24px] ${bgColor} relative flex flex-col justify-between min-h-[160px] transition-all duration-300 hover:scale-[1.01] h-full overflow-hidden`}>
+        <div className={`p-6 rounded-[12px] ${bgColor} relative flex flex-col justify-start min-h-[160px] transition-all duration-300 h-full w-full gap-4 border-0 shadow-none`}>
 
             {/* Header: Icon + Menu */}
-            <div className="flex justify-between items-start w-full mb-4">
-                <div className={`w-12 h-12 rounded-[8px] flex items-center justify-center shrink-0 ${iconBg} ${iconColor} text-xl shadow-sm`}>
+            <div className="flex justify-between items-start w-full">
+                <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-[12px] flex items-center justify-center shrink-0 ${iconBg} ${iconColor} text-sm lg:text-base`}>
                     {icon}
                 </div>
 
-                {/* Removed Overflow Menu */}
+                <button className="h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-gray-500 dark:text-gray-400">
+                    <MoreOutlined style={{ fontSize: '18px' }} />
+                </button>
             </div>
 
             {/* Content Area */}
-            <div className="flex flex-col gap-1">
-                <div className={`font-medium text-[14px] ${isDarkMode ? 'text-gray-400' : 'text-slate-600'}`}>{title}</div>
-                <div className={`font-bold text-[30px] leading-tight ${valueColor || (isDarkMode ? 'text-white' : 'text-slate-900')}`}>{value}</div>
-                <div className={`text-[14px] ${isDarkMode ? 'text-gray-500' : 'text-slate-500'}`}>{subtext}</div>
+            <div className="flex flex-col gap-1 mt-2">
+                <div className={`font-medium text-[14px] ${isDarkMode ? 'text-gray-400' : 'text-slate-500'}`}>{title}</div>
+                <div className={`font-bold text-[28px] leading-tight ${valueColor || (isDarkMode ? 'text-white' : 'text-slate-900')}`}>{value}</div>
+                <div className={`text-[12px] ${isDarkMode ? 'text-gray-500' : 'text-slate-400'} mt-1`}>{subtext}</div>
             </div>
         </div>
     );
@@ -161,7 +160,7 @@ export const CampaignChartComponent = ({ isDarkMode, borderClass, textClass, sub
     };
 
     return (
-        <div className={`p-6 rounded-[20px] border ${cardBg} ${borderClass} h-full flex flex-col`}>
+        <div className={`p-6 rounded-[8px] border ${cardBg} ${borderClass} h-full flex flex-col`}>
             {/* Header */}
             <div className="flex justify-between items-start mb-6">
                 <div>
@@ -209,9 +208,9 @@ export const CampaignChartComponent = ({ isDarkMode, borderClass, textClass, sub
                                 return fullMonths[value] || value;
                             }}
                         />
-                        <Bar dataKey="mutlak" stackId="a" fill="#111827" radius={[0, 0, 0, 0]} />
-                        <Bar dataKey="potansiyel" stackId="a" fill="#4B5563" radius={[0, 0, 0, 0]} />
-                        <Bar dataKey="ai" stackId="a" fill="#D1D5DB" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="mutlak" stackId="a" fill="#000000" radius={[0, 0, 0, 0]} />
+                        <Bar dataKey="potansiyel" stackId="a" fill="#d4d4d8" radius={[0, 0, 0, 0]} />
+                        <Bar dataKey="ai" stackId="a" fill="#f4f4f5" radius={[4, 4, 0, 0]} />
                     </BarChart>
                 </ResponsiveContainer>
             </div>
@@ -219,15 +218,15 @@ export const CampaignChartComponent = ({ isDarkMode, borderClass, textClass, sub
             {/* Legend */}
             <div className="flex items-center justify-center gap-6 mt-4">
                 <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded bg-[#111827]"></span>
+                    <span className="w-3 h-3 rounded bg-black"></span>
                     <span className={`text-sm font-medium ${textClass}`}>Mutlak Risk</span>
                 </div>
                 <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded bg-[#4B5563]"></span>
+                    <span className="w-3 h-3 rounded bg-[#d4d4d8]"></span>
                     <span className={`text-sm font-medium ${textClass}`}>Potansiyel Risk</span>
                 </div>
                 <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded bg-[#D1D5DB]"></span>
+                    <span className="w-3 h-3 rounded bg-[#f4f4f5]"></span>
                     <span className={`text-sm font-medium ${textClass}`}>AI & ML</span>
                 </div>
             </div>
@@ -245,9 +244,9 @@ export const RiskSummaryChartComponent = ({ isDarkMode, borderClass, textClass, 
     }[selectedYear] || { mutlak: 0, potansiyel: 0, ai: 0 };
 
     const chartData = [
-        { name: 'MUTLAK RİSK', value: rawData.mutlak, color: '#111827' }, // Dark
-        { name: 'POTANSİYEL', value: rawData.potansiyel, color: '#4B5563' }, // Gray
-        { name: 'AI & ML', value: rawData.ai, color: '#D1D5DB' }, // Light Gray
+        { name: 'MUTLAK RİSK', value: rawData.mutlak, color: '#000000' }, // Black
+        { name: 'POTANSİYEL', value: rawData.potansiyel, color: '#d4d4d8' }, // Dark Gray
+        { name: 'AI & ML', value: rawData.ai, color: '#f4f4f5' }, // Light Gray
     ];
 
     const total = chartData.reduce((sum, item) => sum + item.value, 0);
@@ -265,7 +264,7 @@ export const RiskSummaryChartComponent = ({ isDarkMode, borderClass, textClass, 
     const isSmall = colSpan < 3;
 
     return (
-        <div className={`p-6 rounded-[20px] border ${cardBg} ${borderClass} h-full flex flex-col`}>
+        <div className={`p-6 rounded-[8px] border ${cardBg} ${borderClass} h-full flex flex-col`}>
             {/* Header */}
             <div className="flex justify-between items-center mb-2">
                 <h3 className={`font-bold text-[18px] ${textClass}`}>Risk Özeti</h3>
@@ -277,18 +276,18 @@ export const RiskSummaryChartComponent = ({ isDarkMode, borderClass, textClass, 
             </div>
 
             {/* Content: Chart + Stats */}
-            <div className="flex flex-col items-center justify-between flex-1 relative">
+            <div className="flex items-center justify-between flex-1 relative gap-4 pr-6">
 
                 {/* Donut Chart */}
-                <div className="w-full h-[200px] relative">
+                <div className="w-2/3 h-[250px] relative">
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                             <Pie
                                 data={chartData}
                                 cx="50%"
                                 cy="50%"
-                                innerRadius={60}
-                                outerRadius={90}
+                                innerRadius={85}
+                                outerRadius={110}
                                 paddingAngle={0}
                                 dataKey="value"
                                 startAngle={90}
@@ -307,23 +306,21 @@ export const RiskSummaryChartComponent = ({ isDarkMode, borderClass, textClass, 
 
                     {/* Center Text */}
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                        <span className={`text-4xl font-bold ${textClass}`}>{total}</span>
-                        <span className={`text-sm font-medium opacity-50 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Bulgu</span>
+                        <span className={`text-5xl font-bold ${textClass}`}>{total}</span>
+                        <span className={`text-sm font-medium opacity-50 mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Bulgu</span>
                     </div>
                 </div>
 
-                {/* Legend Stats Grid - Matches the uploaded image style */}
-                <div className="flex w-full justify-between items-center px-2 mt-4">
+                {/* Legend Stats Grid - Right Side Align */}
+                <div className="flex flex-col justify-center gap-6 w-1/3">
                     {chartData.map((item, index) => (
-                        <div key={index} className="flex flex-col items-center">
-                            <div className="flex items-center gap-2 mb-1">
-                                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }}></span>
-                                <span className={`text-[10px] font-bold uppercase tracking-wider opacity-60 ${textClass}`}>{item.name}</span>
+                        <div key={index} className="flex flex-col items-start gap-1">
+                            <div className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }}></span>
+                                <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-400' : 'text-slate-600'}`}>{item.name}</span>
                             </div>
-                            <div className={`text-xl font-bold ${textClass}`}>{item.value}</div>
                         </div>
                     ))}
-                    {/* Added filler to match image's 'Others' if needed, or just these 3 distribute evenly */}
                 </div>
             </div>
         </div>
@@ -362,7 +359,7 @@ export const PipelineChartComponent = ({ isDarkMode, borderClass, textClass, sub
     };
 
     return (
-        <div className={`p-8 rounded-[24px] border border-gray-100 bg-white h-full flex flex-col shadow-sm`}>
+        <div className={`p-8 rounded-[8px] border border-gray-100 bg-white h-full flex flex-col shadow-sm`}>
             {/* Header */}
             <div className="mb-8">
                 <h3 className="font-bold text-[18px] text-gray-900 mb-1">Risk Özeti 2</h3>
@@ -420,18 +417,18 @@ export const WIDGET_REGISTRY: any = {
     'stat_checkin': {
         component: PastelCardComponent,
         defaultProps: {
-            title: "Toplam Beyanname",
-            icon: <LoginOutlined style={{ fontSize: '18px' }} />,
+            title: "Today's check-in",
+            icon: <ClockCircleOutlined />,
             // Dynamic props map (will be merged in parent)
             propMap: (data: any) => ({
-                value: data.checkIn.value,
-                subtext: data.checkIn.sub,
+                value: data?.checkIn?.value || '0',
+                subtext: data?.checkIn?.sub || 'Data yok',
             }),
             colors: (isDarkMode: boolean) => ({
-                bgColor: isDarkMode ? 'bg-gradient-to-br from-[#082f33] to-[#051416]' : 'bg-[#e6fffb]',
-                iconBg: isDarkMode ? 'bg-[#13c2c2] text-[#002329]' : 'bg-[#006d75] text-white',
-                iconColor: '',
-                valueColor: isDarkMode ? 'text-[#13c2c2]' : 'text-[#006d75]'
+                bgColor: isDarkMode ? 'bg-gradient-to-tr from-cyan-950/40 to-cyan-900/40' : 'bg-gradient-to-tr from-cyan-200/40 to-cyan-100/40',
+                iconBg: isDarkMode ? 'bg-cyan-800' : 'bg-[#002B36]',
+                iconColor: 'text-white/90',
+                valueColor: isDarkMode ? 'text-white' : 'text-slate-900'
             })
         },
         defaultColSpan: 3, // 3/12 = 1/4 width
@@ -439,17 +436,17 @@ export const WIDGET_REGISTRY: any = {
     'stat_checkout': {
         component: PastelCardComponent,
         defaultProps: {
-            title: "Mutlak Risk",
-            icon: <LogoutOutlined style={{ fontSize: '18px' }} />,
+            title: "Today check-out",
+            icon: <LogoutOutlined />,
             propMap: (data: any) => ({
-                value: data.checkOut.value,
-                subtext: data.checkOut.sub,
+                value: data?.checkOut?.value || '0',
+                subtext: data?.checkOut?.sub || 'Data yok',
             }),
             colors: (isDarkMode: boolean) => ({
-                bgColor: isDarkMode ? 'bg-gradient-to-br from-[#002766] to-[#001529]' : 'bg-[#e6f7ff]',
-                iconBg: isDarkMode ? 'bg-[#1890ff] text-[#001529]' : 'bg-[#0050b3] text-white',
-                iconColor: '',
-                valueColor: isDarkMode ? 'text-[#1890ff]' : 'text-[#0050b3]'
+                bgColor: isDarkMode ? 'bg-gradient-to-tr from-green-950/40 to-green-900/40' : 'bg-gradient-to-tr from-green-200/40 to-green-100/40',
+                iconBg: isDarkMode ? 'bg-green-800' : 'bg-[#003B22]',
+                iconColor: 'text-white/90',
+                valueColor: isDarkMode ? 'text-white' : 'text-slate-900'
             })
         },
         defaultColSpan: 3,
@@ -457,17 +454,17 @@ export const WIDGET_REGISTRY: any = {
     'stat_guests': {
         component: PastelCardComponent,
         defaultProps: {
-            title: "Potansiyel Risk",
-            icon: <TeamOutlined style={{ fontSize: '18px' }} />,
+            title: "Total guests",
+            icon: <UserOutlined />,
             propMap: (data: any) => ({
-                value: data.guests.value,
-                subtext: data.guests.sub,
+                value: data?.guests?.value || '0',
+                subtext: data?.guests?.sub || 'Data yok',
             }),
             colors: (isDarkMode: boolean) => ({
-                bgColor: isDarkMode ? 'bg-gradient-to-br from-[#22075e] to-[#120338]' : 'bg-[#f9f0ff]',
-                iconBg: isDarkMode ? 'bg-[#722ed1] text-[#120338]' : 'bg-[#531dab] text-white',
-                iconColor: '',
-                valueColor: isDarkMode ? 'text-[#722ed1]' : 'text-[#531dab]'
+                bgColor: isDarkMode ? 'bg-gradient-to-tr from-pink-950/40 to-pink-900/40' : 'bg-gradient-to-tr from-pink-200/40 to-pink-100/40',
+                iconBg: isDarkMode ? 'bg-pink-800' : 'bg-[#4B0033]',
+                iconColor: 'text-white/90',
+                valueColor: isDarkMode ? 'text-white' : 'text-slate-900'
             })
         },
         defaultColSpan: 3,
@@ -475,17 +472,17 @@ export const WIDGET_REGISTRY: any = {
     'stat_amount': {
         component: PastelCardComponent,
         defaultProps: {
-            title: "AI & ML",
-            icon: <DollarOutlined style={{ fontSize: '18px' }} />,
+            title: "Total amount",
+            icon: <DollarOutlined />,
             propMap: (data: any) => ({
-                value: data.amount.value,
-                subtext: data.amount.sub,
+                value: data?.amount?.value || '0',
+                subtext: data?.amount?.sub || 'Data yok',
             }),
             colors: (isDarkMode: boolean) => ({
-                bgColor: isDarkMode ? 'bg-gradient-to-br from-[#520339] to-[#29001f]' : 'bg-[#fff0f6]',
-                iconBg: isDarkMode ? 'bg-[#eb2f96] text-[#29001f]' : 'bg-[#9e1068] text-white',
-                iconColor: '',
-                valueColor: isDarkMode ? 'text-[#eb2f96]' : 'text-[#9e1068]'
+                bgColor: isDarkMode ? 'bg-gradient-to-tr from-yellow-950/40 to-yellow-900/40' : 'bg-gradient-to-tr from-yellow-200/40 to-yellow-100/40',
+                iconBg: isDarkMode ? 'bg-yellow-800' : 'bg-[#4A3200]',
+                iconColor: 'text-white/90',
+                valueColor: isDarkMode ? 'text-white' : 'text-slate-900'
             })
         },
         defaultColSpan: 3,
@@ -504,5 +501,10 @@ export const WIDGET_REGISTRY: any = {
         component: PipelineChartComponent,
         defaultProps: {},
         defaultColSpan: 6,
+    },
+    'gtip_list': {
+        component: TopGtipWidget,
+        defaultProps: {},
+        defaultColSpan: 3,
     },
 };

@@ -11,11 +11,13 @@ import {
   AppstoreOutlined,
   SettingOutlined,
   BookOutlined,
+  BankOutlined,
 } from '@ant-design/icons'
 import { usePathname, useRouter } from 'next/navigation'
 import Header from '@/components/layout/Header'
-import { useAuth } from '@/context/AuthContext'
-import { useTheme } from '@/context/ThemeContext'
+import { useAuthStore } from '@/store/useAuthStore'
+import { CustomsLoupeLogo } from '@/components/common/CustomsLoupeLogo';
+import { useTheme } from '@/context/ThemeContext';
 
 const { Sider, Content } = Layout
 
@@ -26,20 +28,33 @@ interface MainLayoutProps {
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false)
   const { isDarkMode } = useTheme()
-  const { isAdmin, user } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
+  
+  // Auth State
+  const { currentUser, login, activeCompanyContext } = useAuthStore()
+
+  // Sider Width
+  const siderWidth = 260;
+
+  // Mock Login for Demonstration (If none exists)
+  React.useEffect(() => {
+      if (!currentUser) {
+          login('user_musavir_01'); // Default fallback to Müşavir
+      }
+  }, [currentUser, login]);
 
   // If login page, don't show layout
   if (pathname === '/login' || pathname.startsWith('/auth')) {
     return <>{children}</>;
   }
 
-  // Sider Width
-  const siderWidth = 260;
+  // Role Based Menu Filters
+  const isSuperAdmin = currentUser?.role === 'ADMIN' && currentUser?.primaryCompanyId === 'comp_atez';
 
-  // Menu Items
-  const menuItems: MenuProps['items'] = [
+  const menuItems: MenuProps['items'] = [];
+
+  const mainGroupItems: any[] = [
     {
       key: '/dashboard',
       label: 'Dashboard',
@@ -55,14 +70,46 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       label: 'Risk Kütüphanesi',
       icon: <BookOutlined />,
     },
-  ]
+  ];
 
-  // Add Users menu only if Admin or Manager
-  if (isAdmin || user?.role === 'Manager') {
-    menuItems.push({
+  if (!isSuperAdmin && (currentUser?.role === 'ADMIN' || (currentUser?.role === 'MUSAVIR' && activeCompanyContext?.type === 'GUMRUK'))) {
+    mainGroupItems.push({
       key: '/settings/users',
       label: 'Kullanıcılar',
       icon: <TeamOutlined />,
+    });
+  } else if (isSuperAdmin) {
+    mainGroupItems.push({
+      key: '/settings/users_local',
+      label: 'Kullanıcılar',
+      icon: <TeamOutlined />,
+    });
+  }
+
+  // Group 1: The current company Context Menu
+  menuItems.push({
+    type: 'group',
+    label: activeCompanyContext?.name || 'Firma Menüsü',
+    children: mainGroupItems,
+  });
+
+  // Group 2: The Super Admin Menu
+  if (isSuperAdmin) {
+    menuItems.push({
+      type: 'group',
+      label: 'Super Admin',
+      children: [
+        {
+          key: '/settings/companies',
+          label: 'Firmalar',
+          icon: <BankOutlined />,
+        },
+        {
+          key: '/settings/users',
+          label: 'Kullanıcılar',
+          icon: <TeamOutlined />,
+        }
+      ]
     });
   }
 
@@ -95,22 +142,18 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           alignItems: 'center',
           paddingLeft: 24,
           paddingRight: 24,
-          flexShrink: 0 // Prevents shrinking
+          flexShrink: 0
         }}>
-          <div className="flex items-center gap-3 overflow-hidden">
-            <div
-              className={`min-w-8 w-8 h-8 flex items-center justify-center flex-shrink-0`}
-            >
-              <Image src="/customs-loupe-logo.png" alt="Customs Loupe" width={32} height={32} className="object-contain" />
+          {collapsed ? (
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-lg text-white ml-2 mt-1`}>
+              <CustomsLoupeLogo size={28} />
             </div>
-            {!collapsed && (
-              <span
-                className={`text-base font-bold tracking-tight whitespace-nowrap ${isDarkMode ? 'text-white' : 'text-black'}`}
-              >
-                Customs Loupe
-              </span>
-            )}
-          </div>
+          ) : (
+             <div className="flex items-center ml-2 mt-1">
+                <CustomsLoupeLogo size={32} className="mr-2 drop-shadow-sm" />
+                <span className={`text-xl font-bold tracking-tight mt-1 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Customs Loupe</span>
+             </div>
+          )}
         </div>
 
         {/* Scrollable Menu Section */}
@@ -140,7 +183,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               defaultSelectedKeys={[pathname]}
               items={menuItems}
               style={{ borderRight: 0, background: 'transparent' }} // Standard: no border
-              onClick={({ key }) => router.push(key)}
+              onClick={({ key }: { key: string }) => {
+                if (key === '/settings/users_local') {
+                  router.push('/settings/users');
+                } else {
+                  router.push(key);
+                }
+              }}
             />
           </ConfigProvider>
         </div>

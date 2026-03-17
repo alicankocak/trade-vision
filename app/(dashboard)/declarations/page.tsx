@@ -30,6 +30,7 @@ import { declarationsList, riskDetails, b2cDeclarations } from '@/utils/mockData
 import type { Declaration } from '@/utils/mockData';
 import { useRouter, useSearchParams } from 'next/navigation';
 import dayjs from 'dayjs';
+import { useAuthStore } from '@/store/useAuthStore';
 
 export const dynamic = 'force-dynamic';
 
@@ -50,6 +51,7 @@ const DeclarationsContent: React.FC = () => {
 
     const { isDarkMode } = useTheme();
     const { setGlobalChecking } = useDashboard();
+    const { activeCompanyContext } = useAuthStore();
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const [searchText, setSearchText] = useState('');
     const [loading, setLoading] = useState(false);
@@ -101,7 +103,17 @@ const DeclarationsContent: React.FC = () => {
 
     // Filter Logic
     const currentDataSource = activeSegment === 'B2B' ? declarationsList : b2cData;
-    const filteredData = currentDataSource.filter(item => {
+    
+    // RBAC Filter: Only show items matching active company context, 
+    // unless they belong to GUMRUK (Admin or Musavir looking at their general dashboard)
+    // For now: Only show if item.companyId === activeCompanyContext.id
+    const rbacFilteredData = currentDataSource.filter(item => {
+        if (!activeCompanyContext) return false;
+        if (activeCompanyContext.type === 'GUMRUK') return true; // Show all to Müşavir's default view
+        return item.companyId === activeCompanyContext.id;
+    });
+
+    const filteredData = rbacFilteredData.filter(item => {
         // Global Search
         const matchesGlobalSearch =
             item.no.toLowerCase().includes(searchText.toLowerCase()) ||

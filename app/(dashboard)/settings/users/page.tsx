@@ -1,325 +1,145 @@
 'use client';
 
-import React, { useState, Suspense } from 'react';
-import { Typography, Table, Button, Tag, Space, ConfigProvider, theme, message, Popconfirm, Tabs, Checkbox } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, SafetyOutlined, TeamOutlined } from '@ant-design/icons';
-import { useAuth } from '@/context/AuthContext';
+import React, { useEffect, useMemo } from 'react';
+import { Table, Tag, Button, Input, Select } from 'antd';
+import { PlusOutlined, TeamOutlined, SearchOutlined } from '@ant-design/icons';
+import { PermissionGuard } from '@/components/common/PermissionGuard';
+import { mockUsers, mockCompanies } from '@/data/mockAuthData';
 import { useTheme } from '@/context/ThemeContext';
-import { PermissionGuard } from '@/components/auth/PermissionGuard';
-import { UserModal, UserFormData } from '@/components/settings/UserModal';
+import { useAuthStore } from '@/store/useAuthStore';
+import { auditLogger } from '@/utils/auditLogger';
 
-export const dynamic = 'force-dynamic';
+export default function UsersSettingsPage() {
+  const { isDarkMode } = useTheme();
+  const { currentUser } = useAuthStore();
 
-const { Title } = Typography;
+  useEffect(() => {
+    auditLogger.log('VIEW_DASHBOARD', 'settings-users-page', 'User accessed the Users settings list');
+  }, []);
 
-// Mock data
-const initialUsers: UserFormData[] = [
-    { id: '1', name: 'Alican Admin', email: 'alican@tradevision.com', role: 'Admin', status: 'Aktif' },
-    { id: '2', name: 'Zeynep Yılmaz', email: 'zeynep@tradevision.com', role: 'Manager', status: 'Aktif' },
-    { id: '3', name: 'Ahmet Demir', email: 'ahmet@tradevision.com', role: 'Viewer', status: 'Pasif' },
-];
+  // Filter users based on RBAC logic
+  const visibleUsers = useMemo(() => {
+    if (!currentUser) return [];
+    
+    const isSuperAdmin = currentUser.role === 'ADMIN' && currentUser.primaryCompanyId === 'comp_atez';
 
-function UsersContent() {
-    const { isDarkMode } = useTheme();
-    const { isAdmin, isManager } = useAuth();
-
-    const [users, setUsers] = useState<UserFormData[]>(initialUsers);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingUser, setEditingUser] = useState<UserFormData | null>(null);
-    const [loading, setLoading] = useState(false);
-
-    if (!isAdmin && !isManager) {
-        return (
-            <div className="p-12 text-center">
-                <Title level={4} type="danger">Erişim Reddedildi</Title>
-                <p>Bu sayfayı görüntüleme yetkiniz bulunmamaktadır.</p>
-            </div>
-        );
+    // Super Admin sees everyone
+    if (isSuperAdmin) {
+      return mockUsers;
     }
+    
+    // Normal Admin or Musavir sees users inside their assigned companies OR their own firm
+    if (currentUser.role === 'ADMIN' || currentUser.role === 'MUSAVIR') {
+      const allowedFirmIds = [currentUser.primaryCompanyId, ...currentUser.assignedCompanyIds];
+      return mockUsers.filter(u => 
+        allowedFirmIds.includes(u.primaryCompanyId) && u.primaryCompanyId !== 'comp_atez'
+      );
+    }
+    
+    return [];
+  }, [currentUser]);
 
-    const openModal = (user?: UserFormData) => {
-        setEditingUser(user || null);
-        setIsModalOpen(true);
-    };
+  const columns = [
+    {
+      title: 'Kullanıcı İşlemleri',
+      dataIndex: 'firstName',
+      key: 'name',
+      render: (text: string, record: any) => (
+        <div className="flex flex-col">
+          <span className="font-semibold text-slate-800 dark:text-slate-200">{record.firstName} {record.lastName}</span>
+          <span className="text-xs text-slate-500">{record.email}</span>
+        </div>
+      ),
+    },
+    {
+      title: 'Rol',
+      dataIndex: 'role',
+      key: 'role',
+      render: (role: string) => {
+        const colors = {
+          'ADMIN': 'red',
+          'MUSAVIR': 'blue',
+          'STANDART': 'default'
+        };
+        return <Tag color={colors[role as keyof typeof colors]}>{role}</Tag>;
+      },
+    },
+    {
+      title: 'Bağlı Olduğu Firma',
+      dataIndex: 'primaryCompanyId',
+      key: 'primaryCompanyId',
+      render: (compId: string) => {
+        const comp = mockCompanies.find(c => c.id === compId);
+        return <span className={isDarkMode ? 'text-slate-300' : 'text-slate-600 font-medium'}>{comp?.name || 'Bilinmiyor'}</span>;
+      },
+    },
+    {
+      title: 'Durum',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status: string) => (
+        <Tag color={status === 'ACTIVE' ? 'success' : 'error'} className="rounded-md px-2 py-0.5">
+          {status === 'ACTIVE' ? 'Aktif' : 'Pasif'}
+        </Tag>
+      ),
+    },
+    {
+      title: 'Eylemler',
+      key: 'actions',
+      render: () => (
+        <div className="flex gap-2">
+          <Button size="small" type="link" className="text-blue-500 font-medium p-0">Düzenle</Button>
+          <span className="text-slate-300">|</span>
+          <Button size="small" type="link" className="text-red-500 font-medium p-0">Sil</Button>
+        </div>
+      ),
+    },
+  ];
 
-    const closeModal = () => {
-        setIsModalOpen(false);
-        setEditingUser(null);
-    };
-
-    const handleSubmit = async (values: UserFormData) => {
-        setLoading(true);
-        // Simulate API call frontend queue
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        if (editingUser) {
-            setUsers(users.map(u => u.id === values.id ? { ...u, ...values } : u));
-            message.success('Kullanıcı güncellendi');
-        } else {
-            setUsers([...users, { ...values, id: Math.random().toString() }]);
-            message.success('Kullanıcı eklendi');
-        }
-
-        setLoading(false);
-        closeModal();
-    };
-
-    const handleDelete = async (id: string) => {
-        const hide = message.loading('Siliniyor...', 0);
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 800));
-        hide();
-        setUsers(users.filter(u => u.id !== id));
-        message.success('Kullanıcı başarıyla silindi');
-    };
-
-    const searchBg = isDarkMode ? '#141414' : '#ffffff';
-    const borderCol = isDarkMode ? '#303030' : '#d9d9d9';
-
-    const columns = [
-        {
-            title: 'Ad Soyad',
-            dataIndex: 'name',
-            key: 'name',
-            render: (text: string) => <span className={`font-medium ${isDarkMode ? 'text-white' : 'text-[#262626]'}`}>{text}</span>,
-        },
-        {
-            title: 'E-posta',
-            dataIndex: 'email',
-            key: 'email',
-            render: (text: string) => <span className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>{text}</span>,
-        },
-        {
-            title: 'Rol',
-            dataIndex: 'role',
-            key: 'role',
-            render: (role: string) => {
-                let color = 'default';
-                if (role === 'Admin') color = 'red';
-                if (role === 'Manager') color = 'blue';
-                if (role === 'Viewer') color = 'green';
-
-                return (
-                    <Tag color={color} className="m-0 border-0">
-                        {role}
-                    </Tag>
-                );
-            },
-        },
-        {
-            title: 'Statü',
-            dataIndex: 'status',
-            key: 'status',
-            render: (status: string) => (
-                <Tag color={status === 'Aktif' ? 'success' : 'default'} className="m-0 bg-transparent">
-                    {status}
-                </Tag>
-            ),
-        },
-        {
-            title: 'Aksiyon',
-            key: 'action',
-            render: (_: any, record: UserFormData) => (
-                <PermissionGuard allowedRoles={['Admin']}>
-                    <Space size="middle">
-                        <Button
-                            type="text"
-                            icon={<EditOutlined />}
-                            onClick={() => openModal(record)}
-                            className={isDarkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'}
-                        />
-                        <Popconfirm
-                            title="Kullanıcıyı silmek istediğinize emin misiniz?"
-                            onConfirm={() => handleDelete(record.id!)}
-                            okText="Evet"
-                            cancelText="Hayır"
-                            okButtonProps={{ danger: true, style: { borderRadius: 8 } }}
-                            cancelButtonProps={{ style: { borderRadius: 8 } }}
-                        >
-                            <Button
-                                type="text"
-                                danger
-                                icon={<DeleteOutlined />}
-                            />
-                        </Popconfirm>
-                    </Space>
-                </PermissionGuard>
-            ),
-        },
-    ];
-
-    return (
-        <div className={`min-h-screen p-6 ${isDarkMode ? 'bg-black' : 'bg-[#fafafa]'}`}>
-            <div className="flex flex-col gap-6">
-                <div className="flex justify-between items-center">
-                    <div>
-                        <Title level={4} style={{ margin: 0, color: isDarkMode ? 'white' : '#262626' }}>
-                            Kullanıcı Yönetimi
-                        </Title>
-                        <span className={isDarkMode ? 'text-gray-400' : 'text-[#262626] opacity-70'}>
-                            Sistem kullanıcılarını görüntüleyin ve yönetin.
-                        </span>
-                    </div>
-
-                    <PermissionGuard allowedRoles={['Admin']}>
-                        <Button
-                            type="primary"
-                            icon={<PlusOutlined />}
-                            size="large"
-                            onClick={() => openModal()}
-                            style={{
-                                backgroundColor: isDarkMode ? '#ffffff' : '#262626',
-                                color: isDarkMode ? '#000000' : '#ffffff',
-                                borderRadius: 8
-                            }}
-                        >
-                            Yeni Kullanıcı
-                        </Button>
-                    </PermissionGuard>
+  return (
+    <PermissionGuard allowedRoles={['ADMIN', 'MUSAVIR']}>
+      <div className={`p-6 md:p-8 min-h-screen ${isDarkMode ? 'bg-[#000]' : 'bg-[#fcfcfc]'}`}>
+        <div className="max-w-6xl mx-auto space-y-6">
+          
+          {/* Header */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className={`text-2xl md:text-3xl font-bold mb-2 flex items-center gap-3 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-500">
+                  <TeamOutlined />
                 </div>
-
-                <ConfigProvider
-                    theme={{
-                        algorithm: isDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
-                        token: {
-                            colorPrimary: isDarkMode ? '#ffffff' : '#000000',
-                            colorBgContainer: "transparent",
-                            colorBorder: borderCol,
-                            borderRadius: 8,
-                        },
-                        components: {
-                            Tabs: {
-                                itemSelectedColor: isDarkMode ? '#ffffff' : '#000000',
-                                itemColor: isDarkMode ? '#a1a1a1' : '#595959',
-                                itemHoverColor: isDarkMode ? '#ffffff' : '#000000',
-                                titleFontSize: 15,
-                            }
-                        }
-                    }}
-                >
-                    <Tabs
-                        defaultActiveKey="1"
-                        items={[
-                            {
-                                key: '1',
-                                label: <span className="flex items-center gap-2"><TeamOutlined /> Kullanıcı Listesi</span>,
-                                children: (
-                                    <ConfigProvider
-                                        theme={{
-                                            algorithm: isDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
-                                            token: {
-                                                colorPrimary: isDarkMode ? '#ffffff' : '#000000',
-                                                colorBgContainer: searchBg,
-                                                colorBorder: borderCol,
-                                                borderRadius: 8,
-                                            },
-                                            components: {
-                                                Table: {
-                                                    borderRadius: 8,
-                                                    colorBgContainer: searchBg,
-                                                    headerBg: isDarkMode ? '#1f1f1f' : '#f5f5f5',
-                                                    headerColor: isDarkMode ? '#e5e7eb' : '#262626',
-                                                    rowHoverBg: isDarkMode ? '#1f1f1f' : '#fafafa',
-                                                    borderColor: borderCol,
-                                                }
-                                            }
-                                        }}
-                                    >
-                                        <div className="rounded-[8px] border overflow-hidden mt-4" style={{ borderColor: borderCol }}>
-                                            <Table
-                                                columns={columns}
-                                                dataSource={users}
-                                                rowKey="id"
-                                                pagination={{
-                                                    pageSize: 10,
-                                                    showTotal: (total) => `Toplam ${total} kullanıcı`,
-                                                    style: { paddingRight: 16 }
-                                                }}
-                                            />
-                                        </div>
-                                    </ConfigProvider>
-                                ),
-                            },
-                            {
-                                key: '2',
-                                label: <span className="flex items-center gap-2"><SafetyOutlined /> Sistem Yetki Matrisi</span>,
-                                children: (
-                                    <ConfigProvider
-                                        theme={{
-                                            algorithm: isDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
-                                            token: {
-                                                colorBgContainer: isDarkMode ? '#1f1f1f' : '#ffffff',
-                                                colorBorder: borderCol,
-                                                borderRadius: 8,
-                                            },
-                                            components: {
-                                                Table: {
-                                                    headerBg: isDarkMode ? '#141414' : '#fafafa',
-                                                    borderColor: borderCol,
-                                                    borderRadius: 8,
-                                                }
-                                            }
-                                        }}
-                                    >
-                                        <div className="mt-4">
-                                            <div className="rounded-[8px] border overflow-hidden" style={{ borderColor: borderCol }}>
-                                                <Table
-                                                    rowKey="key"
-                                                    pagination={false}
-                                                    size="middle"
-                                                    columns={[
-                                                        { title: 'Fonksiyon / İşlem', dataIndex: 'feature', key: 'feature', width: '40%' },
-                                                        { title: 'Admin', dataIndex: 'admin', key: 'admin', align: 'center', render: (val) => val === null ? '' : <Checkbox checked={val} disabled className="matrix-checkbox" /> },
-                                                        { title: 'Manager', dataIndex: 'manager', key: 'manager', align: 'center', render: (val) => val === null ? '' : <Checkbox checked={val} disabled className="matrix-checkbox" /> },
-                                                        { title: 'Viewer', dataIndex: 'viewer', key: 'viewer', align: 'center', render: (val) => val === null ? '' : <Checkbox checked={val} disabled className="matrix-checkbox" /> },
-                                                    ]}
-                                                    dataSource={[
-                                                        { key: 'c1', feature: <span className="font-semibold text-gray-400 uppercase text-xs tracking-wider">Kullanıcı İşlemleri</span>, admin: null, manager: null, viewer: null },
-                                                        { key: '1', feature: <span className="pl-4">Ekleme, Silme</span>, admin: true, manager: false, viewer: false },
-                                                        { key: '2', feature: <span className="pl-4">Düzenleme (Admin hariç e-posta kilitli)</span>, admin: true, manager: false, viewer: false },
-                                                        { key: '3', feature: <span className="pl-4">Rol Atama</span>, admin: true, manager: false, viewer: false },
-                                                        { key: 'c2', feature: <span className="font-semibold text-gray-400 uppercase text-xs tracking-wider">Beyanname İşlemleri</span>, admin: null, manager: null, viewer: null },
-                                                        { key: '4', feature: <span className="pl-4">Görüntüleme</span>, admin: true, manager: true, viewer: true },
-                                                        { key: '5', feature: <span className="pl-4">Yeni Oluşturma, Düzenleme</span>, admin: true, manager: true, viewer: false },
-                                                        { key: '6', feature: <span className="pl-4">Statü Sorgulama</span>, admin: true, manager: true, viewer: false },
-                                                        { key: 'c3', feature: <span className="font-semibold text-gray-400 uppercase text-xs tracking-wider">Veri & Raporlama</span>, admin: null, manager: null, viewer: null },
-                                                        { key: '7', feature: <span className="pl-4">Excel/PDF Dışa Aktar</span>, admin: true, manager: true, viewer: false },
-                                                        { key: '8', feature: <span className="pl-4">İşlem Geçmişi Görüntüleme</span>, admin: true, manager: true, viewer: false },
-                                                        { key: 'c4', feature: <span className="font-semibold text-gray-400 uppercase text-xs tracking-wider">Sistem</span>, admin: null, manager: null, viewer: null },
-                                                        { key: '9', feature: <span className="pl-4">Kendi Profilini Düzenleme</span>, admin: true, manager: true, viewer: true },
-                                                        { key: '10', feature: <span className="pl-4">Dashboard İstatistiklerini Görme</span>, admin: true, manager: true, viewer: true },
-                                                    ]}
-                                                />
-                                            </div>
-                                            <div className={`mt-4 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} flex items-center gap-2 bg-opacity-5 p-3 rounded-lg`} style={{ backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)' }}>
-                                                <SafetyOutlined className="text-[16px]" />
-                                                <span>Tüm şifre işlemleri SHA-256 ile korunmakta ve kritik aksiyonlar Frontend Queue kontrolü altındadır.</span>
-                                            </div>
-                                        </div>
-                                    </ConfigProvider>
-                                ),
-                            }
-                        ]}
-                    />
-                </ConfigProvider>
+                Kullanıcı Yönetimi
+              </h1>
+              <p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>
+                Platforma erişebilen kullanıcıları, rollerini ve firmalarını yönetin.
+              </p>
             </div>
+            
+            <div className="flex gap-3">
+              <Input 
+                placeholder="İsim veya E-posta..." 
+                prefix={<SearchOutlined className="text-slate-400" />} 
+                className="w-full md:w-56 rounded-lg"
+              />
+              <Select defaultValue="Tümü" className="w-32" options={[{ label: 'Tümü', value: 'Tümü' }, { label: 'Aktif', value: 'Aktif' }]} />
+              <Button type="primary" icon={<PlusOutlined />} className="bg-indigo-600 hover:bg-indigo-700 rounded-lg border-0">
+                Kullanıcı Davet Et
+              </Button>
+            </div>
+          </div>
 
-            <UserModal
-                open={isModalOpen}
-                onClose={closeModal}
-                onSubmit={handleSubmit}
-                initialValues={editingUser}
-                loading={loading}
+          {/* Table Container */}
+          <div className={`rounded-xl border ${isDarkMode ? 'bg-[#141414] border-gray-800' : 'bg-white border-gray-100'} shadow-sm overflow-hidden`}>
+            <Table 
+              columns={columns} 
+              dataSource={visibleUsers.map(u => ({ ...u, key: u.id }))} 
+              pagination={{ pageSize: 15 }}
+              className={`custom-table ${isDarkMode ? 'ant-table-dark' : ''}`}
             />
+          </div>
 
         </div>
-    );
-}
-
-export default function UsersPage() {
-    return (
-        <Suspense fallback={<div className="flex justify-center p-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div></div>}>
-            <UsersContent />
-        </Suspense>
-    );
+      </div>
+    </PermissionGuard>
+  );
 }

@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Card, Input, Select, Tag, Row, Col, Empty, Space, Badge } from 'antd';
 import { SearchOutlined, FilterOutlined, WarningOutlined, BookOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { riskKutuphaneData, riskKategoriler, riskSeviyeleri, RiskKutuphaneItem } from '../../data/riskKutuphaneMockData';
+import { useAuthStore } from '@/store/useAuthStore';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -10,10 +11,18 @@ export const RiskAnalizKutuphanesi: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const [selectedKategori, setSelectedKategori] = useState('Tümü');
   const [selectedSeviye, setSelectedSeviye] = useState('tumu');
+  const { activeCompanyContext } = useAuthStore();
 
   // Filtreleme ve arama
   const filteredData = useMemo(() => {
-    return riskKutuphaneData.filter(risk => {
+    // RBAC Filtrelemesi
+    const rbacFiltered = riskKutuphaneData.filter(item => {
+        if (!activeCompanyContext) return false;
+        if (activeCompanyContext.type === 'GUMRUK') return true; 
+        return item.companyId === activeCompanyContext.id;
+    });
+
+    return rbacFiltered.filter(risk => {
       const matchesSearch = 
         risk.baslik.toLowerCase().includes(searchText.toLowerCase()) ||
         risk.detay.toLowerCase().includes(searchText.toLowerCase()) ||

@@ -3,12 +3,14 @@ export interface RiskKutuphaneItem {
   baslik: string;
   detay: string;
   aciklama: string;
-  riskKategori: string;
+  companyId: 'comp_trendyol',
+    riskKategori: string;
   riskSeviye: string;
   onerilenAksiyonlar?: string[];
   ilgiliMevzuat?: string;
   ornekSenaryo?: string;
   ilgiliKalem?: string;
+  companyId?: string;
 }
 
 export const riskKategoriler = [
@@ -39,6 +41,7 @@ export const riskKutuphaneData: RiskKutuphaneItem[] = [
     baslik: 'Kıymet Analizi - Referans Fiyat Altı Beyan',
     detay: 'Beyan edilen eşya kıymetinin referans eşya kıymetine göre belirgin şekilde düşük olması.',
     aciklama: 'Aynı veya benzer eşya için belirlenen referans fiyatların %20 ve daha fazla altında bir birim fiyat beyanı söz konusudur. Bu durum vergi kaybına yol açabileceği için dikkatle incelenmelidir.',
+    companyId: 'comp_trendyol',
     riskKategori: 'Kıymet Analizi',
     riskSeviye: 'red-1',
     onerilenAksiyonlar: [
@@ -55,6 +58,7 @@ export const riskKutuphaneData: RiskKutuphaneItem[] = [
     baslik: 'GTİP Uyumu - İstatistiksel Karakteristik Sapması (AI)',
     detay: 'Beyan edilen eşya tanımı ile GTİP arasında makine öğrenimi modellerince tespit edilen uyumsuzluk.',
     aciklama: 'Yapay zeka modellerimiz, eşyanın ticari tanımını analiz ederek, %85 güven skoruna sahip başka bir GTİP ile eşleşmesi gerektiğini bulmuştur. Beyan edilen GTİP, geçmiş işlem verilerine göre bu tanım ile uyumsuzdur.',
+    companyId: 'comp_trendyol',
     riskKategori: 'GTIP Uyumu',
     riskSeviye: 'ai-ml-yuksek',
     onerilenAksiyonlar: [
@@ -69,6 +73,7 @@ export const riskKutuphaneData: RiskKutuphaneItem[] = [
     baslik: 'Belge Eksikliği - Tercihli Menşe / ATR',
     detay: 'Muafiyet veya tercihli tarife uygulanan işlemler için menşe belgesinin bulunmaması.',
     aciklama: 'İthalatta indirimli veya sıfır gümrük vergisi oranından yararlanmak için gerekli olan ATR Dolaşım Belgesi veya Menşe Şahadetnamesi sistemde eksik veya geçersiz görünmektedir.',
+    companyId: 'comp_trendyol',
     riskKategori: 'Belge Eksikliği',
     riskSeviye: 'red-2',
     onerilenAksiyonlar: [
@@ -82,6 +87,7 @@ export const riskKutuphaneData: RiskKutuphaneItem[] = [
     baslik: 'Ağırlık Sapması - Anormal Brüt / Net Farkı',
     detay: 'Geçmiş dönemlerde benzer eşyalar için beyan edilen brüt/net ağırlık oranından ciddi sapma',
     aciklama: 'Belirtilen GTİP veya benzer mal gruplarında daha önce yapılmış ithalatlara kıyasla beyan edilen net ve brüt ağırlık miktarları arasında sistem ortalamasının çok dışında (%30+ fark) bir sapma saptanmıştır.',
+    companyId: 'comp_trendyol',
     riskKategori: 'Kıymet Analizi',
     riskSeviye: 'ai-ml-orta',
     onerilenAksiyonlar: [
@@ -95,6 +101,7 @@ export const riskKutuphaneData: RiskKutuphaneItem[] = [
     baslik: 'Yasaklı veya Yüksek Riskli Ülke Ticareti',
     detay: 'Eşyanın menşe ülkesi, sevk veya ticaret ülkesinin yüksek riskli (gri/kara liste) bölgeleri içermesi.',
     aciklama: 'Uluslararası kuruluşlarca (FATF vb.) belirlenmiş yüksek riskli ülkeler listesinde yer alan bir bölgeden ithalat yapılıyor. Bu işlem özel izlemeye tabi olup daha dikkatli fiziki kontrol ve belge denetimi gerektirir.',
+    companyId: 'comp_trendyol',
     riskKategori: 'Yasaklı Gönderici',
     riskSeviye: 'red-1',
     onerilenAksiyonlar: [

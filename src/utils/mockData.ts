@@ -72,7 +72,8 @@ export const intacAlerts = [
 export interface Declaration {
   key: string
   no: string
-  buyer: string
+  companyId: 'comp_trendyol',
+    buyer: string
   seller: string
   status: 'Completed' | 'Pending' | 'Risk' | 'Processing'
   type: 'İthalat' | 'İhracat' | 'ETGB İth.'
@@ -84,6 +85,7 @@ export interface Declaration {
   paymentMethod?: string
   incoterm?: string
   items?: Array<DeclarationItem>
+  companyId?: string; // RBAC Context Link
   // B2C Specific Fields
   waybillNo?: string;
   grossWeight?: number;
@@ -110,6 +112,7 @@ export const declarationsList: Array<Declaration> = [
   {
     key: '1',
     no: 'TR-34-2024-001',
+    companyId: 'comp_trendyol',
     buyer: 'ABC Lojistik',
     seller: 'Global Tech GmbH',
     status: 'Completed',
@@ -125,6 +128,7 @@ export const declarationsList: Array<Declaration> = [
   {
     key: '2',
     no: 'TR-34-2024-002',
+    companyId: 'comp_trendyol',
     buyer: 'XYZ Gümrük',
     seller: 'Shanghai Trading Co.',
     status: 'Pending',
@@ -140,6 +144,7 @@ export const declarationsList: Array<Declaration> = [
   {
     key: '3',
     no: 'TR-06-2024-089',
+    companyId: 'comp_trendyol',
     buyer: 'Tekno A.Ş.',
     seller: 'EuroParts Ltd.',
     status: 'Risk',
@@ -155,6 +160,7 @@ export const declarationsList: Array<Declaration> = [
   {
     key: '4',
     no: 'TR-35-2024-112',
+    companyId: 'comp_trendyol',
     buyer: 'Mega İthalat',
     seller: 'US Electronics Inc.',
     status: 'Processing',
@@ -170,6 +176,7 @@ export const declarationsList: Array<Declaration> = [
   {
     key: '5',
     no: 'TR-34-2024-405',
+    companyId: 'comp_trendyol',
     buyer: 'Global Trade',
     seller: 'Fabricca Italiana',
     status: 'Completed',
@@ -182,6 +189,7 @@ export const declarationsList: Array<Declaration> = [
   {
     key: '6',
     no: 'TR-01-2024-332',
+    companyId: 'comp_trendyol',
     buyer: 'Adana Tarım',
     seller: 'Agro Rus',
     status: 'Pending',
@@ -194,6 +202,7 @@ export const declarationsList: Array<Declaration> = [
   {
     key: '7',
     no: 'TR-16-2024-554',
+    companyId: 'comp_trendyol',
     buyer: 'Bursa Otomotiv',
     seller: 'German Auto Parts',
     status: 'Risk',
@@ -206,6 +215,7 @@ export const declarationsList: Array<Declaration> = [
   {
     key: '8',
     no: 'TR-34-2024-778',
+    companyId: 'comp_trendyol',
     buyer: 'İstanbul Kimya',
     seller: 'ChemChina',
     status: 'Completed',
@@ -218,6 +228,7 @@ export const declarationsList: Array<Declaration> = [
   {
     key: '9',
     no: 'TR-07-2024-991',
+    companyId: 'comp_trendyol',
     buyer: 'Antalya Turizm',
     seller: 'Hotel Supplies UK',
     status: 'Processing',
@@ -230,6 +241,7 @@ export const declarationsList: Array<Declaration> = [
   {
     key: '10',
     no: 'TR-34-2024-101',
+    companyId: 'comp_trendyol',
     buyer: 'Ege Seramik',
     seller: 'Ceramica Esp',
     status: 'Completed',
@@ -242,6 +254,7 @@ export const declarationsList: Array<Declaration> = [
   {
     key: '11',
     no: 'TR-61-2024-055',
+    companyId: 'comp_trendyol',
     buyer: 'Trabzon Gıda',
     seller: 'Black Sea Traders',
     status: 'Pending',
@@ -254,6 +267,7 @@ export const declarationsList: Array<Declaration> = [
   {
     key: '12',
     no: 'TR-34-2024-882',
+    companyId: 'comp_trendyol',
     buyer: 'Marmara Tekstil',
     seller: 'Indian Fabrics',
     status: 'Risk',
@@ -269,6 +283,7 @@ export const b2cDeclarations: Array<Declaration> = [
   {
     key: 'b2c_1',
     no: '1245415415',
+    companyId: 'comp_trendyol',
     buyer: 'YURTDIŞI FİRMA',
     seller: 'EVRİM YAZILIM VE DANIŞMANLIK TİC.LTD.ŞTİ.',
     status: 'Completed',
@@ -299,6 +314,7 @@ export const b2cDeclarations: Array<Declaration> = [
   {
     key: 'b2c_2',
     no: '124578448',
+    companyId: 'comp_trendyol',
     buyer: 'AVRASYA KO G L MA MEKANİK BAKIM HİZM.SAN. VE TİC.',
     seller: 'SECURITAS TEKNOLOJI HIZMETLERI',
     status: 'Processing',
@@ -329,6 +345,7 @@ export const b2cDeclarations: Array<Declaration> = [
   {
     key: 'b2c_3',
     no: '451545454',
+    companyId: 'comp_trendyol',
     buyer: 'AVRASYA KO G L MA MEKANİK BAKIM HİZM.SAN. VE TİC.',
     seller: 'EVRİM YAZILIM VE DANIŞMANLIK TİC.LTD.ŞTİ.',
     status: 'Pending',
@@ -359,6 +376,7 @@ export const b2cDeclarations: Array<Declaration> = [
   {
     key: 'b2c_4',
     no: '897989878',
+    companyId: 'comp_trendyol',
     buyer: 'YURTDIŞI FİRMA',
     seller: 'EVRİM YAZILIM VE DANIŞMANLIK TİC.LTD.ŞTİ.',
     status: 'Completed',
@@ -389,6 +407,7 @@ export const b2cDeclarations: Array<Declaration> = [
   {
     key: 'b2c_5',
     no: 'tasıma1',
+    companyId: 'comp_trendyol',
     buyer: 'aaaa',
     seller: 'bbb',
     status: 'Risk',
@@ -427,6 +446,7 @@ export const b2cDeclarations: Array<Declaration> = [
   {
     key: 'b2c_6',
     no: 'tasıma2',
+    companyId: 'comp_trendyol',
     buyer: 'EVRİM YAZILIM VE DANIŞMANLIK TİCARET A.Ş.',
     seller: 'EVRİM YAZILIM',
     status: 'Pending',

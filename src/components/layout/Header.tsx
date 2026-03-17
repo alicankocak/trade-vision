@@ -15,6 +15,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import NotificationDrawer from '../notifications/NotificationDrawer';
+import { CompanySwitcher } from '../common/CompanySwitcher';
 
 const { Header: AntHeader } = Layout;
 
@@ -109,6 +110,9 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle }) => {
 
                 {/* Right Section: Icons - Added padding-right since Header padding is 0 */}
                 <div className="flex items-center gap-2 pr-6">
+
+                    {/* Company Switcher */}
+                    <CompanySwitcher />
 
                     {/* Theme Toggle */}
                     <Button

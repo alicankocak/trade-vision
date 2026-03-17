@@ -3,35 +3,31 @@
 import React, { useState } from 'react'
 import { Button, Form, Input, Typography, message } from 'antd'
 import { LockOutlined, LoginOutlined, UserOutlined } from '@ant-design/icons'
+import { CustomsLoupeLogo } from '@/components/common/CustomsLoupeLogo'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/context/AuthContext'
+import { useAuthStore } from '@/store/useAuthStore'
+import { mockUsers } from '@/data/mockAuthData'
 
 const { Title, Text } = Typography
 
 const Login: React.FC = () => {
     const [loading, setLoading] = useState(false)
-    const { login } = useAuth()
+    const { login } = useAuthStore()
     const router = useRouter()
 
     const onFinish = (values: any) => {
         setLoading(true)
         setTimeout(() => {
             setLoading(false)
-            if (
-                values.email === 'alican@tradevision.com' &&
-                values.password === 'trade123'
-            ) {
-                login('Admin')
-                message.success('Giriş başarılı! Yönetici olarak yönlendiriliyorsunuz.')
-                router.push('/dashboard')
-            } else if (
-                values.email === 'user@tradevision.com' &&
-                values.password === 'user123'
-            ) {
-                login('User')
-                message.success(
-                    'Giriş başarılı! Kullanıcı olarak yönlendiriliyorsunuz.',
-                )
+            
+            // Check credentials against our mock database
+            const foundUser = mockUsers.find(
+                u => u.email === values.email && u.password === values.password
+            )
+
+            if (foundUser) {
+                login(foundUser.id)
+                message.success(`Giriş başarılı! ${foundUser.firstName} ${foundUser.lastName} olarak yönlendiriliyorsunuz.`)
                 router.push('/dashboard')
             } else {
                 message.error('Hatalı e-posta veya şifre.')
@@ -47,11 +43,9 @@ const Login: React.FC = () => {
                 <div className="w-1/2 bg-black text-white flex flex-col justify-between p-12 relative overflow-hidden">
                     <div className="z-10">
                         <div className="flex items-center gap-3 mb-8">
-                            <div className="px-3 py-1 bg-white text-black text-xl font-bold rounded">
-                                TV
-                            </div>
-                            <span className="text-2xl tracking-wide font-light">
-                                Trade<span className="font-bold">Vision</span>
+                            <CustomsLoupeLogo size={42} className="drop-shadow-lg" />
+                            <span className="text-3xl tracking-wide font-light mt-2">
+                                Customs<span className="font-bold">Loupe</span>
                             </span>
                         </div>
                         <Title
@@ -66,7 +60,7 @@ const Login: React.FC = () => {
                     </div>
 
                     <div className="z-10 text-xs text-gray-500">
-                        &copy; 2024 TradeVision Inc. All rights reserved.
+                        &copy; 2024 Customs Loupe. All rights reserved.
                     </div>
 
                     {/* Abstract Pattern Overlay */}
@@ -102,7 +96,7 @@ const Login: React.FC = () => {
                             >
                                 <Input
                                     prefix={<UserOutlined className="text-gray-400" />}
-                                    placeholder="alican@tradevision.com (Admin)"
+                                    placeholder="alican@customsloupe.com (Admin)"
                                 />
                             </Form.Item>
 
@@ -130,9 +124,20 @@ const Login: React.FC = () => {
 
                             <div className="text-center">
                                 <Text type="secondary" className="text-xs">
-                                    Demo Hesaplar: <br />
-                                    Admin: alican@tradevision.com / trade123 <br />
-                                    User: user@tradevision.com / user123
+                                    <div className="font-semibold mb-1">Örnek Şifre Tüm Hesaplar: 123</div>
+                                    <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 text-left justify-center mx-auto w-max max-w-full overflow-hidden text-[10px] mt-2 border rounded-lg p-3 bg-gray-50/50">
+                                      <span className="font-medium text-black">Atez Admin:</span><span>admin@atez.com</span>
+                                      <span className="font-medium text-black">Atez Müşavir:</span><span>musavir@atez.com</span>
+                                      <span className="font-medium text-black">Atez Standart:</span><span>standart@atez.com</span>
+                                      
+                                      <span className="font-medium text-black">DCS Admin:</span><span>admin@dcs.com</span>
+                                      <span className="font-medium text-black">DCS Müşavir:</span><span>musavir@dcs.com</span>
+                                      <span className="font-medium text-black">DCS Standart:</span><span>standart@dcs.com</span>
+                                      
+                                      <span className="font-medium text-black">Trendyol Admin:</span><span>admin@trendyol.com</span>
+                                      <span className="font-medium text-black">Trendyol Müşavir:</span><span>musavir@trendyol.com</span>
+                                      <span className="font-medium text-black">Trendyol Std:</span><span>standart@trendyol.com</span>
+                                    </div>
                                 </Text>
                             </div>
                         </Form>

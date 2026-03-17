@@ -6,8 +6,8 @@ import MainLayout from '@/layout/MainLayout';
 import GlobalLoader from '@/components/GlobalLoader';
 
 export const metadata: Metadata = {
-    title: 'TradeVision',
-    description: 'Geleceğin Ticaret Vizyonu',
+    title: 'Customs Loupe',
+    description: 'Yapay Zeka Destekli Gümrük ve Beyanname Analizi',
 };
 
 export default function RootLayout({

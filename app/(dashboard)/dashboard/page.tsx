@@ -12,8 +12,12 @@ import {
     DownOutlined,
     DeleteOutlined
 } from '@ant-design/icons';
-
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, arrayMove, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
+import { SortableWidget } from '@/components/dashboard/SortableWidget';
 import { WIDGET_REGISTRY } from '@/utils/widgetRegistry';
+import { useAuthStore } from '@/store/useAuthStore';
+import { declarationsList, b2cDeclarations } from '@/utils/mockData';
 
 // Types
 interface DashboardLayout {
@@ -30,6 +34,7 @@ const DEFAULT_WIDGETS_B2B = [
     { id: 'w5', type: 'chart_risk_summary', colSpan: 6, rowSpan: 8 },
     { id: 'w6', type: 'chart_campaign', colSpan: 6, rowSpan: 8 },
     { id: 'w7', type: 'chart_pipeline', colSpan: 6, rowSpan: 8 },
+    { id: 'w8', type: 'gtip_list', colSpan: 3, rowSpan: 6 },
 ];
 
 const DEFAULT_WIDGETS_B2C = [
@@ -37,6 +42,7 @@ const DEFAULT_WIDGETS_B2C = [
     { id: 'w3', type: 'stat_guests', colSpan: 3, rowSpan: 3 },
     { id: 'w6', type: 'chart_campaign', colSpan: 6, rowSpan: 8 },
     { id: 'w1', type: 'stat_checkin', colSpan: 3, rowSpan: 3 },
+    { id: 'w8', type: 'gtip_list', colSpan: 3, rowSpan: 6 },
 ];
 
 const MOCK_SAVED_DASHBOARDS: DashboardLayout[] = [
@@ -46,13 +52,45 @@ const MOCK_SAVED_DASHBOARDS: DashboardLayout[] = [
 
 const Dashboard: React.FC = () => {
     const { isDarkMode } = useTheme();
-    const [activeSegment, setActiveSegment] = useState<'B2B' | 'B2C'>('B2B');
+    const { activeCompanyContext, currentUser } = useAuthStore();
+    const activeSegment = activeCompanyContext?.type === 'GUMRUK' ? 'B2B' : 'B2C';
 
     // --- State for separate layouts ---
     const [layouts, setLayouts] = useState<{ B2B: { id: string; type: string; colSpan?: number; rowSpan?: number }[], B2C: { id: string; type: string; colSpan?: number; rowSpan?: number }[] }>({
         B2B: [...DEFAULT_WIDGETS_B2B],
         B2C: [...DEFAULT_WIDGETS_B2C]
     });
+
+    // --- Persistence Logic ---
+    useEffect(() => {
+        if (!currentUser || !activeCompanyContext) return;
+
+        const storageKey = `customsloupe_dashboard_v1_${currentUser.id}_${activeCompanyContext.id}`;
+        const savedLayouts = localStorage.getItem(storageKey);
+
+        if (savedLayouts) {
+            try {
+                const parsed = JSON.parse(savedLayouts);
+                if (parsed.B2B && parsed.B2C) {
+                    setLayouts(parsed);
+                }
+            } catch (e) {
+                console.error('Failed to parse saved dashboard layouts', e);
+            }
+        } else {
+            // Reset to defaults if no saved layout for this context
+            setLayouts({
+                B2B: [...DEFAULT_WIDGETS_B2B],
+                B2C: [...DEFAULT_WIDGETS_B2C]
+            });
+        }
+    }, [currentUser?.id, activeCompanyContext?.id]);
+
+    const saveToLocalStorage = (newLayouts: typeof layouts) => {
+        if (!currentUser || !activeCompanyContext) return;
+        const storageKey = `customsloupe_dashboard_v1_${currentUser.id}_${activeCompanyContext.id}`;
+        localStorage.setItem(storageKey, JSON.stringify(newLayouts));
+    };
 
     // --- Edit Mode States ---
     const [isEditing, setIsEditing] = useState(false);
@@ -63,30 +101,37 @@ const Dashboard: React.FC = () => {
     // Derived state for current view
     const widgets = layouts[activeSegment];
 
-    // Helper to update current segment's widgets
-    const setWidgets = (updater: (prev: { id: string; type: string; colSpan?: number; rowSpan?: number }[]) => { id: string; type: string; colSpan?: number; rowSpan?: number }[]) => {
-        setLayouts(prev => ({
-            ...prev,
-            [activeSegment]: updater(prev[activeSegment])
-        }));
+
+
+    // Auth Store Filter (already brought up earlier)
+
+    // Compute dynamic dashboard stats from the mocks
+    const getStats = (source: any[]) => {
+        // Filter by active firm:
+        const filtered = source.filter(item => {
+            if (!activeCompanyContext) return false;
+            if (activeCompanyContext.type === 'GUMRUK') return true; 
+            return item.companyId === activeCompanyContext.id;
+        });
+
+        const total = filtered.length;
+        const totalPendingIntac = filtered.filter(f => f.intacDate === '-').length;
+        const totalRisks = filtered.reduce((a, b) => a + (b.potentialRisks?.length || 0), 0);
+        const totalAbsolute = filtered.reduce((a, b) => a + (b.absoluteRisks?.length || 0), 0);
+        const completed = total - totalPendingIntac;
+
+        return {
+            checkIn: { value: total.toLocaleString(), sub: 'Toplam Beyanname Sayısı' },
+            checkOut: { value: completed.toLocaleString(), sub: 'Statü: Tamamlandı' },
+            guests: { value: totalPendingIntac.toLocaleString(), sub: 'Statü: İntaç Bekleyenler' },
+            amount: { value: totalRisks.toLocaleString(), sub: `Yüksek Riskler: ${totalAbsolute}` },
+        };
     };
-
-
 
     // --- Mock Data for Content ---
     const dashboardData = {
-        B2B: {
-            checkIn: { value: '1,245', sub: 'Bulgu Sayısı: 12' },
-            checkOut: { value: '45', sub: 'Bulgu Sayısı: 5' },
-            guests: { value: '128', sub: 'Bulgu Sayısı: 8' },
-            amount: { value: '892', sub: 'Bulgu Sayısı: 42' },
-        },
-        B2C: {
-            checkIn: { value: '8,450', sub: 'Bulgu Sayısı: 156' },
-            checkOut: { value: '120', sub: 'Bulgu Sayısı: 14' },
-            guests: { value: '3,200', sub: 'Bulgu Sayısı: 98' },
-            amount: { value: '1,500', sub: 'Bulgu Sayısı: 210' },
-        }
+        B2B: getStats(declarationsList),
+        B2C: getStats(b2cDeclarations),
     };
     const currentData = dashboardData[activeSegment];
 
@@ -97,8 +142,36 @@ const Dashboard: React.FC = () => {
 
 
 
+    // --- Drag and Drop Logic ---
+    const sensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    );
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+        if (!isEditing || !over || active.id === over.id) return;
+
+        updateAndSave((prev) => {
+            const oldIndex = prev.findIndex((w) => w.id === active.id);
+            const newIndex = prev.findIndex((w) => w.id === over.id);
+            return arrayMove(prev, oldIndex, newIndex);
+        });
+    };
+
+    const handleResize = (id: string, newSpan: number) => {
+        updateAndSave(prev => prev.map(w => w.id === id ? { ...w, colSpan: newSpan } : w));
+    };
+
+    const handleResizeHeight = (id: string, newRow: number) => {
+        updateAndSave(prev => prev.map(w => w.id === id ? { ...w, rowSpan: newRow } : w));
+    };
+
     const handleSave = () => {
         setIsEditing(false);
+        const newLayouts = { ...layouts };
+        saveToLocalStorage(newLayouts);
+
         const newLayout: DashboardLayout = {
             id: Date.now().toString(),
             name: `${dashboardName} (${activeSegment})`,
@@ -116,7 +189,7 @@ const Dashboard: React.FC = () => {
 
     const handleLoadDashboard = (layout: DashboardLayout) => {
         // When loading a dashboard, we apply it to the CURRENT segment
-        setWidgets(() => [...layout.widgets]);
+        updateAndSave(() => [...layout.widgets]);
         setDashboardName(layout.name);
         message.success(`"${layout.name}" yüklendi.`);
     };
@@ -126,11 +199,31 @@ const Dashboard: React.FC = () => {
             // Default span from registry
             const defaultSpan = WIDGET_REGISTRY[type]?.defaultColSpan || 1;
             const defaultRow = 5; // Default height for new widgets
-            setWidgets(prev => [...prev, { id: `new_${Date.now()}`, type, colSpan: defaultSpan, rowSpan: defaultRow }]);
+            updateAndSave(prev => [...prev, { id: `new_${Date.now()}`, type, colSpan: defaultSpan, rowSpan: defaultRow }]);
         } else {
             // Remove first instance of this type
-            setWidgets(prev => prev.filter(w => w.type !== type));
+            updateAndSave(prev => prev.filter(w => w.type !== type));
         }
+    };
+
+    // Auto-save on specific actions if desired, but here we'll stick to handleSave 
+    // and also save when widgets are moved if we want it to be seamless.
+    // Let's add it to handleDragEnd and handleResize as well for better UX.
+
+    const updateAndSave = (updater: (prev: { id: string; type: string; colSpan?: number; rowSpan?: number }[]) => { id: string; type: string; colSpan?: number; rowSpan?: number }[]) => {
+        setLayouts(prev => {
+            const currentWidgets = prev[activeSegment];
+            const updatedWidgets = updater(currentWidgets);
+            const newState = {
+                ...prev,
+                [activeSegment]: updatedWidgets
+            };
+            // Only auto-save if NOT in editing mode or if we want immediate persistence
+            if (!isEditing) {
+                saveToLocalStorage(newState);
+            }
+            return newState;
+        });
     };
 
     // --- Render Helpers ---
@@ -149,21 +242,50 @@ const Dashboard: React.FC = () => {
         const dynamicProps = defaultProps.propMap ? defaultProps.propMap(currentData) : {};
         const colorProps = defaultProps.colors ? defaultProps.colors(isDarkMode) : {};
 
+        if (!isEditing) {
+            return (
+                <div key={widget.id} style={{ gridColumn: `span ${currentSpan}`, gridRow: `span ${currentRow}` }}>
+                    <WidgetComponent
+                        {...defaultProps}
+                        {...dynamicProps}
+                        {...colorProps}
+                        isDarkMode={isDarkMode}
+                        colSpan={currentSpan}
+                        // Pass legacy styles for charts
+                        borderClass={isDarkMode ? 'border-[#303030]' : 'border-[#E3E3E7]'}
+                        textClass={isDarkMode ? 'text-white' : 'text-slate-800'}
+                        subTextClass={isDarkMode ? 'text-gray-400' : 'text-slate-500'}
+                        cardBg={isDarkMode ? 'bg-[#1f1f1f]' : 'bg-white'}
+                    />
+                </div>
+            );
+        }
+
         return (
-            <div key={widget.id} style={{ gridColumn: `span ${currentSpan}`, gridRow: `span ${currentRow}` }}>
-                <WidgetComponent
-                    {...defaultProps}
-                    {...dynamicProps}
-                    {...colorProps}
-                    isDarkMode={isDarkMode}
-                    colSpan={currentSpan}
-                    // Pass legacy styles for charts
-                    borderClass={isDarkMode ? 'border-[#303030]' : 'border-[#E3E3E7]'}
-                    textClass={isDarkMode ? 'text-white' : 'text-slate-800'}
-                    subTextClass={isDarkMode ? 'text-gray-400' : 'text-slate-500'}
-                    cardBg={isDarkMode ? 'bg-[#1f1f1f]' : 'bg-white'}
-                />
-            </div>
+            <SortableWidget
+                key={widget.id}
+                id={widget.id}
+                isEditing={isEditing}
+                colSpan={currentSpan}
+                rowSpan={currentRow}
+                onResize={(newSpan) => handleResize(widget.id, newSpan)}
+                onResizeHeight={(newRow) => handleResizeHeight(widget.id, newRow)}
+            >
+                <div className="h-full w-full">
+                    <WidgetComponent
+                        {...defaultProps}
+                        {...dynamicProps}
+                        {...colorProps}
+                        isDarkMode={isDarkMode}
+                        colSpan={currentSpan}
+                        borderClass={isDarkMode ? 'border-[#303030]' : 'border-[#E3E3E7]'}
+                        textClass={isDarkMode ? 'text-white' : 'text-slate-800'}
+                        subTextClass={isDarkMode ? 'text-gray-400' : 'text-slate-500'}
+                        cardBg={isDarkMode ? 'bg-[#1f1f1f]' : 'bg-white'}
+                        style={{ height: '100%', minHeight: '100%' }}
+                    />
+                </div>
+            </SortableWidget>
         );
     };
 
@@ -205,27 +327,6 @@ const Dashboard: React.FC = () => {
                         )}
                     </div>
 
-                    <ConfigProvider
-                        theme={{
-                            components: {
-                                Segmented: {
-                                    itemSelectedBg: isDarkMode ? '#ffffff' : '#000000',
-                                    itemSelectedColor: isDarkMode ? '#000000' : '#ffffff',
-                                    trackBg: isDarkMode ? '#1f1f1f' : '#ebebeb',
-                                }
-                            }
-                        }}
-                    >
-                        <Segmented
-                            options={[
-                                { label: 'B2B', value: 'B2B' },
-                                { label: 'B2C', value: 'B2C' }
-                            ]}
-                            value={activeSegment}
-                            onChange={(val) => setActiveSegment(val as 'B2B' | 'B2C')}
-                            style={{ width: 'fit-content' }}
-                        />
-                    </ConfigProvider>
                 </div>
 
                 {isEditing ? (
@@ -248,9 +349,26 @@ const Dashboard: React.FC = () => {
             </div>
 
             {/* Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 auto-rows-[46px] gap-6 pb-20">
-                {widgets.map(widget => renderWidget(widget))}
-            </div>
+            {isEditing ? (
+                <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                >
+                    <SortableContext
+                        items={widgets.map(w => w.id)}
+                        strategy={rectSortingStrategy}
+                    >
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 auto-rows-[64px] gap-6 pb-20 overflow-hidden min-h-[500px]">
+                            {widgets.map(widget => renderWidget(widget))}
+                        </div>
+                    </SortableContext>
+                </DndContext>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 auto-rows-[64px] gap-6 pb-20">
+                    {widgets.map(widget => renderWidget(widget))}
+                </div>
+            )}
 
 
             {/* Widgets Drawer */}
